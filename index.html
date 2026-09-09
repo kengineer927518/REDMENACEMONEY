@@ -1,0 +1,1250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Red Menace Money</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2E4756">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RedMenace$">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3EFE3;
+    --paper-2:#ECE6D6;
+    --ink:#23282B;
+    --ink-soft:#5B6266;
+    --rail:#2E4756;
+    --rail-dark:#1C2A32;
+    --amber:#D98B2B;
+    --amber-soft:#F3D9AE;
+    --pine:#3F6B4E;
+    --pine-soft:#D9E6DC;
+    --rust:#B0432E;
+    --rust-soft:#F0D9D2;
+    --line:#D9D2C0;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Archivo',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  header.top{
+    background:var(--rail);
+    color:#F3EFE3;
+    padding:18px 20px 0 20px;
+    position:sticky;
+    top:0;
+    z-index:10;
+  }
+  header.top .title{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    max-width:920px;
+    margin:0 auto;
+    padding-bottom:14px;
+  }
+  header.top h1{
+    font-size:20px;
+    font-weight:700;
+    margin:0;
+    letter-spacing:0.2px;
+  }
+  header.top .sub{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:#C7D3D8;
+  }
+  nav.tabs{
+    max-width:920px;
+    margin:0 auto;
+    display:flex;
+    gap:2px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  nav.tabs::-webkit-scrollbar{display:none;}
+  nav.tabs button{
+    background:none;
+    border:none;
+    color:#B7C4CA;
+    font-family:'Archivo',sans-serif;
+    font-size:14px;
+    font-weight:600;
+    padding:10px 14px 12px 14px;
+    cursor:pointer;
+    white-space:nowrap;
+    border-bottom:3px solid transparent;
+  }
+  nav.tabs button.active{
+    color:#fff;
+    border-bottom:3px solid var(--amber);
+  }
+  main{
+    max-width:920px;
+    margin:0 auto;
+    padding:20px 20px 80px 20px;
+  }
+  .view{display:none;}
+  .view.active{display:block;}
+  h2.view-title{
+    font-size:17px;
+    font-weight:700;
+    margin:0 0 4px 0;
+  }
+  p.view-note{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin:0 0 18px 0;
+    line-height:1.5;
+    max-width:70ch;
+  }
+  .card{
+    background:#FBF9F2;
+    border:1px solid var(--line);
+    border-left:4px solid var(--rail);
+    border-radius:var(--radius);
+    padding:16px 18px;
+    margin-bottom:14px;
+  }
+  .card.income{border-left-color:var(--pine);}
+  .card.expense{border-left-color:var(--amber);}
+  .card.debt{border-left-color:var(--rust);}
+  .card.asset{border-left-color:var(--rail);}
+  .card.goal{border-left-color:var(--amber);}
+  .card h3{
+    font-size:15px;
+    margin:0 0 10px 0;
+    font-weight:700;
+  }
+  .row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:6px 0;
+    border-bottom:1px solid var(--line);
+    font-size:14px;
+  }
+  .row:last-child{border-bottom:none;}
+  .row .label{flex:1;min-width:0;}
+  .row input[type=text]{
+    border:none;
+    background:none;
+    font-family:'Archivo',sans-serif;
+    font-size:14px;
+    width:100%;
+    padding:2px 0;
+  }
+  .row input[type=text]:focus{outline:none;border-bottom:1px solid var(--rail);}
+  .num-input{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:5px 8px;
+    width:110px;
+    text-align:right;
+    background:#fff;
+  }
+  select, input[type=date]{
+    font-family:'Archivo',sans-serif;
+    font-size:13px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:5px 8px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .field-grid{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:8px 14px;
+    align-items:center;
+  }
+  .field-grid label{font-size:13px;color:var(--ink-soft);}
+  .icon-btn{
+    background:none;
+    border:none;
+    color:var(--ink-soft);
+    cursor:pointer;
+    font-size:16px;
+    line-height:1;
+    padding:4px 6px;
+  }
+  .icon-btn:hover{color:var(--rust);}
+  .add-btn{
+    background:var(--rail);
+    color:#fff;
+    border:none;
+    border-radius:var(--radius);
+    padding:8px 14px;
+    font-family:'Archivo',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    cursor:pointer;
+    margin-top:6px;
+  }
+  .add-btn:hover{background:var(--rail-dark);}
+  .add-btn.ghost{
+    background:none;
+    color:var(--rail);
+    border:1px solid var(--rail);
+  }
+  .hero-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-bottom:18px;
+  }
+  .hero-num{
+    background:#FBF9F2;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 18px;
+  }
+  .hero-num .lbl{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .hero-num .val{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:26px;
+    font-weight:600;
+  }
+  .hero-num .val.neg{color:var(--rust);}
+  .hero-num .val.pos{color:var(--pine);}
+  @media(max-width:520px){
+    .hero-grid{grid-template-columns:1fr;}
+  }
+  .track-wrap{margin:10px 0 4px 0;}
+  .track{
+    position:relative;
+    height:6px;
+    background:var(--line);
+    border-radius:3px;
+    margin:14px 0 6px 0;
+  }
+  .track .fill{
+    position:absolute;
+    left:0;top:0;bottom:0;
+    background:var(--pine);
+    border-radius:3px;
+  }
+  .track .marker{
+    position:absolute;
+    top:50%;
+    transform:translate(-50%,-50%);
+    font-size:14px;
+  }
+  .track .flag{
+    position:absolute;
+    right:-2px;
+    top:50%;
+    transform:translate(0,-50%);
+    font-size:13px;
+  }
+  .goal-meta{
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    color:var(--ink-soft);
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .flow-line{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    padding:4px 0;
+  }
+  .flow-line .amt{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+  table.ledger{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+  }
+  table.ledger th{
+    text-align:right;
+    font-size:11px;
+    color:var(--ink-soft);
+    font-weight:600;
+    padding:6px 8px;
+    border-bottom:1px solid var(--line);
+  }
+  table.ledger th:first-child, table.ledger td:first-child{text-align:left;}
+  table.ledger td{
+    text-align:right;
+    font-family:'IBM Plex Mono',monospace;
+    padding:6px 8px;
+    border-bottom:1px solid var(--line);
+  }
+  .warn-box{
+    background:var(--rust-soft);
+    border:1px solid var(--rust);
+    border-radius:var(--radius);
+    padding:10px 14px;
+    font-size:13px;
+    color:#6E2418;
+    margin-bottom:14px;
+    line-height:1.5;
+  }
+  .ok-box{
+    background:var(--pine-soft);
+    border:1px solid var(--pine);
+    border-radius:var(--radius);
+    padding:10px 14px;
+    font-size:13px;
+    color:#1E3B29;
+    margin-bottom:14px;
+    line-height:1.5;
+  }
+  .empty-state{
+    font-size:13px;
+    color:var(--ink-soft);
+    padding:14px 0;
+    font-style:normal;
+  }
+  canvas#nwChart{width:100%;height:140px;}
+  .save-toast{
+    position:fixed;
+    bottom:16px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--rail-dark);
+    color:#fff;
+    padding:8px 16px;
+    border-radius:var(--radius);
+    font-size:13px;
+    opacity:0;
+    transition:opacity .2s, transform .2s;
+    pointer-events:none;
+  }
+  .save-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="title">
+    <h1>Red Menace Money</h1>
+    <span class="sub" id="todayLabel"></span>
+  </div>
+  <nav class="tabs" id="tabNav">
+    <button data-view="dashboard" class="active">Dashboard</button>
+    <button data-view="paycheque">Paycheque</button>
+    <button data-view="budget">Budget</button>
+    <button data-view="debts">Debts</button>
+    <button data-view="networth">Net Worth</button>
+    <button data-view="goals">Goals</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <section class="view active" id="view-dashboard">
+    <h2 class="view-title">Dashboard</h2>
+    <p class="view-note">Where things stand right now, and how close you are to the milestones on the Goals page.</p>
+    <div class="hero-grid">
+      <div class="hero-num">
+        <div class="lbl">Net worth</div>
+        <div class="val mono" id="dashNetWorth">—</div>
+      </div>
+      <div class="hero-num">
+        <div class="lbl">Total debt (Mortgage + HELOC + LOC)</div>
+        <div class="val mono" id="dashTotalDebt">—</div>
+      </div>
+    </div>
+    <div class="card" id="dashRetirementCard">
+      <h3>Retirement target</h3>
+      <div id="dashRetirementBody"></div>
+    </div>
+    <div class="card" id="dashCashflowCard">
+      <h3>This month's cash flow</h3>
+      <div id="dashCashflowBody"></div>
+    </div>
+    <div id="dashGoalsWrap"></div>
+    <div class="card">
+      <h3>Your data</h3>
+      <p class="view-note" style="margin-bottom:12px;">Everything here lives only on this device/browser. Export a backup any time, or import a file someone made for you (like a starter file with your real numbers already filled in).</p>
+      <button class="add-btn" data-action="export-data">Export data (.json)</button>
+      <button class="add-btn ghost" data-action="import-data">Import data (.json)</button>
+      <input type="file" id="importFileInput" accept="application/json,.json" style="display:none;">
+      <p class="empty-state" id="importStatus" style="margin-top:8px;"></p>
+    </div>
+  </section>
+
+  <!-- PAYCHEQUE -->
+  <section class="view" id="view-paycheque">
+    <h2 class="view-title">Paycheque</h2>
+    <p class="view-note">Set up your biweekly pay once — the Budget page pulls income from here automatically, including the months with 3 paycheques.</p>
+    <div class="card income">
+      <h3>Biweekly pay</h3>
+      <div class="field-grid">
+        <label for="pcFirstDate">First pay date</label>
+        <input type="date" id="pcFirstDate">
+        <label for="pcGross">Gross pay per cheque</label>
+        <input type="number" step="0.01" class="num-input" id="pcGross">
+        <label for="pcDeduct">Deductions per cheque (tax, CPP, EI, pension)</label>
+        <input type="number" step="0.01" class="num-input" id="pcDeduct">
+        <label>Net pay per cheque</label>
+        <span class="mono" id="pcNet" style="font-weight:600;"></span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Next 6 paycheques</h3>
+      <table class="ledger" id="pcTable"></table>
+    </div>
+    <div class="card">
+      <h3>Income by month (next 3 months)</h3>
+      <table class="ledger" id="pcMonthTable"></table>
+      <p class="view-note" style="margin-top:10px;">Some months land 3 paycheques instead of 2 — that's normal for biweekly pay, not an error.</p>
+    </div>
+  </section>
+
+  <!-- BUDGET -->
+  <section class="view" id="view-budget">
+    <h2 class="view-title">Budget</h2>
+    <p class="view-note">Recurring monthly amounts. Employment income comes from the Paycheque page automatically — everything else you enter here.</p>
+    <div class="card income">
+      <h3>Income</h3>
+      <div class="row">
+        <div class="label">Employment income (this month, from Paycheque)</div>
+        <span class="mono" id="budgetEmpIncome"></span>
+      </div>
+      <div id="incomeList"></div>
+      <button class="add-btn ghost" data-action="add-income">+ Add other income</button>
+    </div>
+    <div class="card expense">
+      <h3>Expenses</h3>
+      <div id="expenseList"></div>
+      <button class="add-btn ghost" data-action="add-expense">+ Add expense</button>
+    </div>
+    <div class="card">
+      <h3>Summary</h3>
+      <div class="flow-line"><span>Total income</span><span class="amt" id="sumIncome"></span></div>
+      <div class="flow-line"><span>Total expenses</span><span class="amt" id="sumExpense"></span></div>
+      <div class="flow-line" style="border-top:1px solid var(--line);margin-top:6px;padding-top:8px;"><span><strong>Net cash flow</strong></span><span class="amt" id="sumNet"></span></div>
+    </div>
+  </section>
+
+  <!-- DEBTS -->
+  <section class="view" id="view-debts">
+    <h2 class="view-title">Debts</h2>
+    <p class="view-note">Update the balance whenever you get a statement. The payoff estimate recalculates from today using the rate, payment and any extra or lump-sum payments below.</p>
+    <div id="debtsWrap"></div>
+  </section>
+
+  <!-- NET WORTH -->
+  <section class="view" id="view-networth">
+    <h2 class="view-title">Net Worth</h2>
+    <p class="view-note">Log a snapshot whenever you check your accounts. Mortgage/HELOC/LOC are pre-filled from the Debts page but can be adjusted for that entry.</p>
+    <div class="card">
+      <h3>Trend</h3>
+      <canvas id="nwChart"></canvas>
+    </div>
+    <div id="nwWrap"></div>
+    <button class="add-btn" data-action="add-networth">+ Log a snapshot</button>
+  </section>
+
+  <!-- GOALS -->
+  <section class="view" id="view-goals">
+    <h2 class="view-title">Goals</h2>
+    <p class="view-note">Set a target and track it against your real numbers. Linked goals (net worth, mortgage, HELOC, LOC) update automatically as you update those pages; custom goals you update yourself.</p>
+    <div id="goalsWrap"></div>
+    <div class="card goal" id="goalForm" style="display:none;">
+      <h3>New goal</h3>
+      <div class="field-grid">
+        <label for="gfName">Name</label>
+        <input type="text" id="gfName" class="num-input" style="width:100%;text-align:left;" placeholder="e.g. Mortgage paid off">
+        <label for="gfTrack">Track</label>
+        <select id="gfTrack">
+          <option value="netWorth">Net worth</option>
+          <option value="totalDebt">Total debt</option>
+          <option value="mortgage">Mortgage balance</option>
+          <option value="heloc">HELOC balance</option>
+          <option value="loc">Line of Credit balance</option>
+          <option value="custom">Custom (I'll update it myself)</option>
+          <option value="date">Date only (e.g. retirement countdown)</option>
+        </select>
+        <label for="gfTarget">Target value ($)</label>
+        <input type="number" step="0.01" class="num-input" id="gfTarget" value="0">
+        <label for="gfCurrent">Starting value ($, custom goals only)</label>
+        <input type="number" step="0.01" class="num-input" id="gfCurrent" value="0">
+        <label for="gfDate">Target date</label>
+        <input type="date" id="gfDate">
+      </div>
+      <button class="add-btn" data-action="save-goal" style="margin-top:12px;">Create goal</button>
+      <button class="add-btn ghost" data-action="cancel-goal" style="margin-top:12px;">Cancel</button>
+    </div>
+    <button class="add-btn" data-action="add-goal">+ Add a goal</button>
+  </section>
+
+</main>
+
+<div class="save-toast" id="saveToast">Saved</div>
+
+<script>
+/* ---------------------------------------------------------
+   Utilities
+--------------------------------------------------------- */
+const CAD = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
+const CAD2 = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 2 });
+function money(n){ return CAD.format(n||0); }
+function money2(n){ return CAD2.format(n||0); }
+function fmtDate(d){ return new Date(d).toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'}); }
+function fmtMonthYear(d){ return new Date(d).toLocaleDateString('en-CA',{year:'numeric',month:'short'}); }
+function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function addMonths(d,n){ const r=new Date(d); r.setMonth(r.getMonth()+n); return r; }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function clamp(n,lo,hi){ return Math.max(lo,Math.min(hi,n)); }
+function yearsMonthsBetween(a,b){
+  a=new Date(a); b=new Date(b);
+  let months = (b.getFullYear()-a.getFullYear())*12 + (b.getMonth()-a.getMonth());
+  if (b.getDate() < a.getDate()) months--;
+  months = Math.max(0,months);
+  return { years: Math.floor(months/12), months: months%12 };
+}
+
+/* ---------------------------------------------------------
+   Amortization (validated against the CIBC statement figures)
+--------------------------------------------------------- */
+function amortize({balance, annualRate, payment, frequency, extra=0, lumpAmount=0, lumpMonth=0, startDate, maxPeriods=1000}){
+  const periodsPerYear = frequency === 'biweekly' ? 26 : 12;
+  const periodRate = annualRate / periodsPerYear;
+  let date = new Date(startDate);
+  let bal = balance;
+  let totalInterest = 0;
+  const schedule = [];
+  let prevMonth = null;
+  for (let n=1; n<=maxPeriods; n++){
+    if (n>1) date = frequency==='biweekly' ? addDays(date,14) : addMonths(date,1);
+    if (bal<=0) break;
+    const interest = bal*periodRate;
+    const month = date.getMonth()+1;
+    let lump = 0;
+    if (lumpAmount>0 && month===lumpMonth && month!==prevMonth) lump = lumpAmount;
+    prevMonth = month;
+    const principal = payment+extra+lump-interest;
+    totalInterest += interest;
+    bal = Math.max(0, bal-principal);
+    schedule.push({n,date:new Date(date),interest,principal,lump,balance:bal});
+    if (bal<=0) break;
+  }
+  return {
+    schedule,
+    periodsToPayoff: schedule.length,
+    payoffDate: schedule.length ? schedule[schedule.length-1].date : null,
+    totalInterest,
+    coversInterest: schedule.length ? (payment+extra) > schedule[0].interest : true
+  };
+}
+
+/* ---------------------------------------------------------
+   State
+--------------------------------------------------------- */
+const DEFAULT_STATE = {
+  assumptions: {
+    kenDOB: '',
+    wifeDOB: '',
+    retirementDate: ''
+  },
+  paycheque: { firstDate: todayISO(), gross: 0, deduct: 0 },
+  budgetIncome: [ { id: uid(), name: 'Other Income', amount: 0 } ],
+  budgetExpense: [
+    { id: uid(), name: 'Mortgage Payment', amount: 0 },
+    { id: uid(), name: 'HELOC Payment', amount: 0 },
+    { id: uid(), name: 'Reliance (Water Heater/Furnace Rental)', amount: 0 },
+    { id: uid(), name: 'Line of Credit Payment', amount: 0 },
+    { id: uid(), name: 'Greater Sudbury Utilities', amount: 0 },
+    { id: uid(), name: 'Enbridge Gas', amount: 0 },
+    { id: uid(), name: 'Cell Phone', amount: 0 },
+    { id: uid(), name: 'Eastlink (Internet/TV)', amount: 0 },
+    { id: uid(), name: "Ken's Medications", amount: 0 },
+    { id: uid(), name: 'Property Tax', amount: 0 },
+    { id: uid(), name: 'WestJet (Travel)', amount: 0 },
+    { id: uid(), name: 'Costco Mastercard', amount: 0 },
+    { id: uid(), name: 'Home Insurance', amount: 0 },
+    { id: uid(), name: 'Groceries', amount: 0 },
+    { id: uid(), name: 'Transportation/Fuel', amount: 0 },
+    { id: uid(), name: 'Savings/Investment Contribution', amount: 0 },
+    { id: uid(), name: 'Discretionary/Other', amount: 0 }
+  ],
+  debts: {
+    mortgage: { balance: 0, rate: 0, payment: 0, frequency: 'biweekly', extra: 0, lumpAmount: 0, lumpMonth: 12 },
+    heloc: { balance: 0, rate: 0, payment: 0, extra: 0 },
+    loc: { balance: 0, rate: 0, payment: 0, extra: 0 }
+  },
+  netWorthEntries: [
+    {
+      id: uid(), date: todayISO(),
+      assets: { chequing: 0, tfsa: 0, rrsp: 0, nonReg: 0, stock: 0, homeValue: 0, other: 0 },
+      liabilities: { mortgage: 0, heloc: 0, loc: 0, creditCard: 0, otherDebt: 0 }
+    }
+  ],
+  goals: []
+};
+
+let state = null;
+function hasClaudeStorage(){ return typeof window !== 'undefined' && !!window.storage; }
+
+async function loadState(){
+  try{
+    let raw = null;
+    if (hasClaudeStorage()){
+      const res = await window.storage.get('finance-state', false);
+      raw = res && res.value;
+    } else {
+      raw = localStorage.getItem('finance-state');
+    }
+    if (raw){
+      state = JSON.parse(raw);
+    } else {
+      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      await saveState();
+    }
+  } catch(e){
+    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  }
+}
+
+async function saveState(){
+  try{
+    if (hasClaudeStorage()){
+      await window.storage.set('finance-state', JSON.stringify(state), false);
+    } else {
+      localStorage.setItem('finance-state', JSON.stringify(state));
+    }
+    flashSaved();
+  } catch(e){
+    console.error('Save failed', e);
+  }
+}
+
+let saveTimer=null;
+function queueSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveState, 400);
+}
+
+function flashSaved(){
+  const t = document.getElementById('saveToast');
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(()=>t.classList.remove('show'), 900);
+}
+
+/* ---------------------------------------------------------
+   Computed helpers
+--------------------------------------------------------- */
+function currentDebtBalance(key){ return state.debts[key].balance; }
+function totalDebtNow(){
+  return state.debts.mortgage.balance + state.debts.heloc.balance + state.debts.loc.balance;
+}
+function computeLatestNetWorth(){
+  if (!state.netWorthEntries || !state.netWorthEntries.length) return 0;
+  const sorted = [...state.netWorthEntries].sort((a,b)=> new Date(a.date)-new Date(b.date));
+  const e = sorted[sorted.length-1];
+  return netWorthOfEntry(e);
+}
+function netWorthOfEntry(e){
+  const a = e.assets, l = e.liabilities;
+  const totalAssets = (a.chequing||0)+(a.tfsa||0)+(a.rrsp||0)+(a.nonReg||0)+(a.stock||0)+(a.homeValue||0)+(a.other||0);
+  const totalLiab = (l.mortgage||0)+(l.heloc||0)+(l.loc||0)+(l.creditCard||0)+(l.otherDebt||0);
+  return totalAssets-totalLiab;
+}
+function generatePaycheques(fromDate, count){
+  const list = [];
+  let d = new Date(state.paycheque.firstDate);
+  // fast-forward to on/after fromDate
+  while (d < fromDate) d = addDays(d,14);
+  for (let i=0;i<count;i++){
+    list.push({ date: new Date(d), gross: state.paycheque.gross, deduct: state.paycheque.deduct, net: state.paycheque.gross-state.paycheque.deduct });
+    d = addDays(d,14);
+  }
+  return list;
+}
+function incomeForMonth(year, month){ // month: 0-11
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month+1, 1);
+  let d = new Date(state.paycheque.firstDate);
+  // walk backward if needed to find a start point before 'start'
+  while (d > start) d = addDays(d,-14);
+  let total = 0;
+  while (d < end){
+    if (d >= start && d < end) total += (state.paycheque.gross-state.paycheque.deduct);
+    d = addDays(d,14);
+  }
+  return total;
+}
+
+/* ---------------------------------------------------------
+   Rendering: Dashboard
+--------------------------------------------------------- */
+function renderDashboard(){
+  document.getElementById('dashNetWorth').textContent = money(computeLatestNetWorth());
+  document.getElementById('dashTotalDebt').textContent = money(totalDebtNow());
+
+  if (state.assumptions.retirementDate){
+    const rd = new Date(state.assumptions.retirementDate);
+    const ym = yearsMonthsBetween(new Date(), rd);
+    document.getElementById('dashRetirementBody').innerHTML = `
+      <div class="flow-line"><span>Target date</span><span class="amt">${fmtDate(rd)}</span></div>
+      <div class="flow-line"><span>Time remaining</span><span class="amt">${ym.years} yrs ${ym.months} mo</span></div>
+      <div class="field-grid" style="margin-top:8px;"><label>Change target date</label><input type="date" id="retirementDateInput" value="${state.assumptions.retirementDate}"></div>
+    `;
+  } else {
+    document.getElementById('dashRetirementBody').innerHTML = `
+      <p class="empty-state">No target date set yet.</p>
+      <div class="field-grid"><label>Set a target date</label><input type="date" id="retirementDateInput" value=""></div>
+    `;
+  }
+
+  const now = new Date();
+  const empIncome = incomeForMonth(now.getFullYear(), now.getMonth());
+  const otherIncome = state.budgetIncome.reduce((s,i)=>s+Number(i.amount||0),0);
+  const totalExpense = state.budgetExpense.reduce((s,i)=>s+Number(i.amount||0),0);
+  const net = empIncome+otherIncome-totalExpense;
+  document.getElementById('dashCashflowBody').innerHTML = `
+    <div class="flow-line"><span>Income</span><span class="amt">${money(empIncome+otherIncome)}</span></div>
+    <div class="flow-line"><span>Expenses</span><span class="amt">${money(totalExpense)}</span></div>
+    <div class="flow-line" style="border-top:1px solid var(--line);margin-top:6px;padding-top:8px;"><span><strong>Net</strong></span><span class="amt" style="color:${net<0?'var(--rust)':'var(--pine)'}">${money(net)}</span></div>
+  `;
+
+  document.getElementById('dashGoalsWrap').innerHTML = `<h3 style="font-size:15px;margin:18px 0 8px 0;">Goals</h3>` +
+    (state.goals.length ? state.goals.map(g=>goalCardHTML(g)).join('') : `<p class="empty-state">No goals yet — add one on the Goals page.</p>`);
+}
+
+/* ---------------------------------------------------------
+   Rendering: Paycheque
+--------------------------------------------------------- */
+function renderPaycheque(){
+  document.getElementById('pcFirstDate').value = state.paycheque.firstDate;
+  document.getElementById('pcGross').value = state.paycheque.gross;
+  document.getElementById('pcDeduct').value = state.paycheque.deduct;
+  document.getElementById('pcNet').textContent = money2(state.paycheque.gross-state.paycheque.deduct);
+
+  const upcoming = generatePaycheques(new Date(), 6);
+  document.getElementById('pcTable').innerHTML = `
+    <tr><th>Pay date</th><th>Gross</th><th>Deductions</th><th>Net</th></tr>
+    ${upcoming.map(p=>`<tr><td>${fmtDate(p.date)}</td><td>${money2(p.gross)}</td><td>${money2(p.deduct)}</td><td>${money2(p.net)}</td></tr>`).join('')}
+  `;
+
+  const now = new Date();
+  const months = [0,1,2].map(off=>{
+    const d = addMonths(now,off);
+    return { label: fmtMonthYear(d), total: incomeForMonth(d.getFullYear(), d.getMonth()) };
+  });
+  document.getElementById('pcMonthTable').innerHTML = `
+    <tr><th>Month</th><th>Employment income</th></tr>
+    ${months.map(m=>`<tr><td>${m.label}</td><td>${money2(m.total)}</td></tr>`).join('')}
+  `;
+}
+
+/* ---------------------------------------------------------
+   Rendering: Budget
+--------------------------------------------------------- */
+function budgetItemRow(item, kind){
+  return `
+    <div class="row" data-id="${item.id}" data-kind="${kind}">
+      <div class="label"><input type="text" value="${escapeAttr(item.name)}" data-field="name"></div>
+      <input type="number" step="0.01" class="num-input" value="${item.amount}" data-field="amount">
+      <button class="icon-btn" data-action="delete-item" title="Remove">✕</button>
+    </div>
+  `;
+}
+function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
+
+function renderBudget(){
+  const now = new Date();
+  const emp = incomeForMonth(now.getFullYear(), now.getMonth());
+  document.getElementById('budgetEmpIncome').textContent = money2(emp);
+
+  document.getElementById('incomeList').innerHTML = state.budgetIncome.map(i=>budgetItemRow(i,'income')).join('');
+  document.getElementById('expenseList').innerHTML = state.budgetExpense.map(i=>budgetItemRow(i,'expense')).join('');
+
+  const otherIncome = state.budgetIncome.reduce((s,i)=>s+Number(i.amount||0),0);
+  const totalExpense = state.budgetExpense.reduce((s,i)=>s+Number(i.amount||0),0);
+  const totalIncome = emp+otherIncome;
+  const net = totalIncome-totalExpense;
+  document.getElementById('sumIncome').textContent = money2(totalIncome);
+  document.getElementById('sumExpense').textContent = money2(totalExpense);
+  const netEl = document.getElementById('sumNet');
+  netEl.textContent = money2(net);
+  netEl.style.color = net<0 ? 'var(--rust)' : 'var(--pine)';
+}
+
+/* ---------------------------------------------------------
+   Rendering: Debts
+--------------------------------------------------------- */
+function debtCardHTML(key, title){
+  const d = state.debts[key];
+  const isMortgage = key === 'mortgage';
+  const result = amortize({
+    balance: d.balance, annualRate: d.rate, payment: d.payment,
+    frequency: isMortgage ? d.frequency : 'monthly',
+    extra: d.extra, lumpAmount: isMortgage ? d.lumpAmount : 0, lumpMonth: isMortgage ? d.lumpMonth : 0,
+    startDate: todayISO(), maxPeriods: 1000
+  });
+  let payoffLine;
+  if (d.balance<=0){
+    payoffLine = `<div class="ok-box">Already paid off.</div>`;
+  } else if (!result.coversInterest){
+    payoffLine = `<div class="warn-box">At this payment, interest (${money2(result.schedule[0].interest)}/period) is more than what you're paying — this balance will grow, not shrink. Increase the payment or extra payment to turn this around.</div>`;
+  } else if (result.periodsToPayoff >= 1000){
+    payoffLine = `<div class="warn-box">Payoff is more than ${Math.round(1000*(isMortgage&&d.frequency==='biweekly'?14:30)/365)} years out at this rate — consider increasing the payment.</div>`;
+  } else {
+    const ym = yearsMonthsBetween(new Date(), result.payoffDate);
+    payoffLine = `<div class="ok-box">Projected payoff: <strong>${fmtDate(result.payoffDate)}</strong> (${ym.years} yrs ${ym.months} mo from today, total interest ${money(result.totalInterest)})</div>`;
+  }
+
+  return `
+  <div class="card debt" data-debt="${key}">
+    <h3>${title}</h3>
+    <div class="field-grid">
+      <label>Current balance</label>
+      <input type="number" step="0.01" class="num-input" data-field="balance" value="${d.balance}">
+      <label>Annual interest rate (%)</label>
+      <input type="number" step="0.01" class="num-input" data-field="rate" value="${(d.rate*100).toFixed(2)}">
+      <label>Payment per period</label>
+      <input type="number" step="0.01" class="num-input" data-field="payment" value="${d.payment}">
+      ${isMortgage ? `
+      <label>Payment frequency</label>
+      <select data-field="frequency">
+        <option value="monthly" ${d.frequency==='monthly'?'selected':''}>Monthly</option>
+        <option value="biweekly" ${d.frequency==='biweekly'?'selected':''}>Biweekly</option>
+      </select>` : ''}
+      <label>Extra payment (per period)</label>
+      <input type="number" step="0.01" class="num-input" data-field="extra" value="${d.extra}">
+      ${isMortgage ? `
+      <label>Annual lump-sum prepayment</label>
+      <input type="number" step="0.01" class="num-input" data-field="lumpAmount" value="${d.lumpAmount}">
+      <label>Lump-sum month (1=Jan…12=Dec)</label>
+      <input type="number" min="1" max="12" step="1" class="num-input" data-field="lumpMonth" value="${d.lumpMonth}">` : ''}
+    </div>
+    ${payoffLine}
+  </div>`;
+}
+
+function renderDebts(){
+  document.getElementById('debtsWrap').innerHTML =
+    debtCardHTML('mortgage','Mortgage') +
+    debtCardHTML('heloc','HELOC') +
+    debtCardHTML('loc','Line of Credit');
+}
+
+/* ---------------------------------------------------------
+   Rendering: Net Worth
+--------------------------------------------------------- */
+const NW_ASSET_FIELDS = [['chequing','Chequing/Savings'],['tfsa','TFSA'],['rrsp','RRSP'],['nonReg','Non-Reg Investments'],['stock','Solium/Company Stock'],['homeValue','Home Value'],['other','Other Assets']];
+const NW_LIAB_FIELDS = [['mortgage','Mortgage'],['heloc','HELOC'],['loc','Line of Credit'],['creditCard','Credit Card'],['otherDebt','Other Debt']];
+
+function nwEntryCardHTML(e){
+  const totalAssets = NW_ASSET_FIELDS.reduce((s,[k])=>s+Number(e.assets[k]||0),0);
+  const totalLiab = NW_LIAB_FIELDS.reduce((s,[k])=>s+Number(e.liabilities[k]||0),0);
+  return `
+  <div class="card asset" data-id="${e.id}">
+    <h3>${fmtDate(e.date)} <button class="icon-btn" style="float:right;" data-action="delete-networth">✕</button></h3>
+    <div class="field-grid">
+      <label>Entry date</label>
+      <input type="date" data-field="date" data-group="meta" value="${e.date}">
+      ${NW_ASSET_FIELDS.map(([k,label])=>`
+        <label>${label}</label>
+        <input type="number" step="0.01" class="num-input" data-field="${k}" data-group="assets" value="${e.assets[k]||0}">
+      `).join('')}
+      ${NW_LIAB_FIELDS.map(([k,label])=>`
+        <label>${label}</label>
+        <input type="number" step="0.01" class="num-input" data-field="${k}" data-group="liabilities" value="${e.liabilities[k]||0}">
+      `).join('')}
+    </div>
+    <div class="flow-line" style="border-top:1px solid var(--line);margin-top:8px;padding-top:8px;">
+      <span><strong>Net worth</strong></span>
+      <span class="amt">${money(totalAssets-totalLiab)}</span>
+    </div>
+  </div>`;
+}
+
+function renderNetWorth(){
+  const sorted = [...state.netWorthEntries].sort((a,b)=> new Date(b.date)-new Date(a.date));
+  document.getElementById('nwWrap').innerHTML = sorted.length
+    ? sorted.map(nwEntryCardHTML).join('')
+    : `<p class="empty-state">No snapshots logged yet.</p>`;
+  drawNWChart([...state.netWorthEntries].sort((a,b)=> new Date(a.date)-new Date(b.date)));
+}
+
+function drawNWChart(sorted){
+  const canvas = document.getElementById('nwChart');
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.getBoundingClientRect();
+  const w = canvas.width = rect.width * (window.devicePixelRatio||1);
+  const h = canvas.height = 140 * (window.devicePixelRatio||1);
+  ctx.clearRect(0,0,w,h);
+  if (sorted.length < 1) return;
+  const values = sorted.map(netWorthOfEntry);
+  const min = Math.min(0, ...values);
+  const max = Math.max(...values, min+1);
+  const pad = 10*(window.devicePixelRatio||1);
+  const stepX = sorted.length>1 ? (w-2*pad)/(sorted.length-1) : 0;
+  ctx.strokeStyle = '#3F6B4E';
+  ctx.lineWidth = 2*(window.devicePixelRatio||1);
+  ctx.beginPath();
+  sorted.forEach((e,i)=>{
+    const x = pad + stepX*i;
+    const y = h-pad - ((values[i]-min)/(max-min))*(h-2*pad);
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  ctx.fillStyle = '#3F6B4E';
+  sorted.forEach((e,i)=>{
+    const x = pad + stepX*i;
+    const y = h-pad - ((values[i]-min)/(max-min))*(h-2*pad);
+    ctx.beginPath();
+    ctx.arc(x,y,3*(window.devicePixelRatio||1),0,7);
+    ctx.fill();
+  });
+}
+
+/* ---------------------------------------------------------
+   Rendering: Goals
+--------------------------------------------------------- */
+const TRACK_LABELS = {
+  netWorth: 'Net worth', totalDebt: 'Total debt', mortgage: 'Mortgage', heloc: 'HELOC', loc: 'Line of Credit', custom: 'Custom', date: 'Date only'
+};
+function getCurrentValueForGoal(g){
+  switch(g.track){
+    case 'netWorth': return computeLatestNetWorth();
+    case 'totalDebt': return totalDebtNow();
+    case 'mortgage': return state.debts.mortgage.balance;
+    case 'heloc': return state.debts.heloc.balance;
+    case 'loc': return state.debts.loc.balance;
+    case 'custom': return Number(g.manualCurrent||0);
+    default: return null;
+  }
+}
+function goalProgress(g){
+  if (g.track === 'date'){
+    if (!g.targetDate) return 0;
+    const start = new Date(g.createdDate);
+    const end = new Date(g.targetDate);
+    const total = end-start;
+    if (total<=0) return 1;
+    return clamp((Date.now()-start)/total, 0, 1);
+  }
+  const current = getCurrentValueForGoal(g);
+  const base = g.baselineValue;
+  const target = g.targetValue;
+  if (target === base) return current>=target ? 1 : 0;
+  return clamp((current-base)/(target-base), 0, 1);
+}
+function goalCardHTML(g){
+  const pct = goalProgress(g);
+  const pctLabel = Math.round(pct*100)+'%';
+  let currentLabel = '';
+  if (g.track === 'date'){
+    currentLabel = g.targetDate ? (()=>{ const ym = yearsMonthsBetween(new Date(), g.targetDate); return `${ym.years} yrs ${ym.months} mo remaining`; })() : 'No date set';
+  } else {
+    const cur = getCurrentValueForGoal(g);
+    currentLabel = `${money(cur)} of ${money(g.targetValue)} target`;
+  }
+  return `
+  <div class="card goal" data-id="${g.id}">
+    <h3>${escapeAttr(g.name)} <button class="icon-btn" style="float:right;" data-action="delete-goal">✕</button></h3>
+    <div class="goal-meta"><span>${currentLabel}</span><span>${g.targetDate?fmtDate(g.targetDate):''}</span></div>
+    <div class="track">
+      <div class="fill" style="width:${pct*100}%;"></div>
+      <div class="marker" style="left:${pct*100}%;">🚂</div>
+      <div class="flag">🏁</div>
+    </div>
+    <div class="goal-meta"><span>${pctLabel} of the way there</span><span>${TRACK_LABELS[g.track]}</span></div>
+    ${g.track==='custom' ? `<div class="field-grid" style="margin-top:8px;"><label>Update current value</label><input type="number" step="0.01" class="num-input" data-field="manualCurrent" value="${g.manualCurrent||0}"></div>` : ''}
+  </div>`;
+}
+function renderGoals(){
+  document.getElementById('goalsWrap').innerHTML = state.goals.length
+    ? state.goals.map(g=>goalCardHTML(g)).join('')
+    : `<p class="empty-state">No goals yet.</p>`;
+}
+
+/* ---------------------------------------------------------
+   Render all + navigation
+--------------------------------------------------------- */
+function renderAll(){
+  renderDashboard();
+  renderPaycheque();
+  renderBudget();
+  renderDebts();
+  renderNetWorth();
+  renderGoals();
+}
+
+function setActiveView(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id==='view-'+view));
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+}
+
+document.getElementById('tabNav').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-view]');
+  if (!btn) return;
+  setActiveView(btn.dataset.view);
+});
+
+/* ---------------------------------------------------------
+   Event wiring
+--------------------------------------------------------- */
+document.addEventListener('input', (e)=>{
+  const t = e.target;
+
+  if (t.id==='retirementDateInput'){ state.assumptions.retirementDate = t.value; queueSave(); renderDashboard(); return; }
+
+  if (t.id==='pcFirstDate'){ state.paycheque.firstDate = t.value; queueSave(); renderPaycheque(); renderDashboard(); renderBudget(); return; }
+  if (t.id==='pcGross'){ state.paycheque.gross = Number(t.value||0); queueSave(); renderPaycheque(); renderDashboard(); renderBudget(); return; }
+  if (t.id==='pcDeduct'){ state.paycheque.deduct = Number(t.value||0); queueSave(); renderPaycheque(); renderDashboard(); renderBudget(); return; }
+
+  const row = t.closest('.row[data-kind]');
+  if (row){
+    const kind = row.dataset.kind;
+    const id = row.dataset.id;
+    const list = kind==='income' ? state.budgetIncome : state.budgetExpense;
+    const item = list.find(i=>i.id===id);
+    if (item){
+      const field = t.dataset.field;
+      item[field] = field==='amount' ? Number(t.value||0) : t.value;
+      queueSave();
+      renderBudget();
+      renderDashboard();
+    }
+    return;
+  }
+
+  const debtCard = t.closest('.card[data-debt]');
+  if (debtCard){
+    const key = debtCard.dataset.debt;
+    const field = t.dataset.field;
+    if (field){
+      let val = t.value;
+      if (field==='frequency'){ state.debts[key][field] = val; }
+      else if (field==='rate'){ state.debts[key][field] = Number(val||0)/100; }
+      else { state.debts[key][field] = Number(val||0); }
+      queueSave();
+      renderDebts();
+      renderDashboard();
+      renderGoals();
+    }
+    return;
+  }
+
+  const goalCard = t.closest('.card.goal[data-id]');
+  if (goalCard && t.dataset.field==='manualCurrent'){
+    const g = state.goals.find(g=>g.id===goalCard.dataset.id);
+    if (g){ g.manualCurrent = Number(t.value||0); queueSave(); renderGoals(); renderDashboard(); }
+    return;
+  }
+
+  const nwCard = t.closest('.card.asset[data-id]');
+  if (nwCard && t.dataset.group){
+    const entry = state.netWorthEntries.find(en=>en.id===nwCard.dataset.id);
+    if (entry){
+      const group = t.dataset.group, field = t.dataset.field;
+      if (group==='meta'){
+        entry.date = t.value;
+        queueSave();
+        renderNetWorth();
+        renderDashboard();
+      } else {
+        entry[group][field] = Number(t.value||0);
+        queueSave();
+        renderDashboard();
+        // update just the total line + chart without losing input focus
+        const totalAssets = NW_ASSET_FIELDS.reduce((s,[k])=>s+Number(entry.assets[k]||0),0);
+        const totalLiab = NW_LIAB_FIELDS.reduce((s,[k])=>s+Number(entry.liabilities[k]||0),0);
+        const totalEl = nwCard.querySelector('.flow-line .amt');
+        if (totalEl) totalEl.textContent = money(totalAssets-totalLiab);
+        drawNWChart([...state.netWorthEntries].sort((a,b)=> new Date(a.date)-new Date(b.date)));
+      }
+    }
+    return;
+  }
+});
+
+document.addEventListener('change', (e)=>{
+  const t = e.target;
+  const debtCard = t.closest('.card[data-debt]');
+  if (debtCard && t.tagName==='SELECT'){
+    const key = debtCard.dataset.debt;
+    state.debts[key].frequency = t.value;
+    queueSave();
+    renderDebts();
+    renderDashboard();
+  }
+});
+
+document.addEventListener('click', (e)=>{
+  const action = e.target.dataset.action;
+  if (!action) return;
+
+  if (action==='add-income'){
+    state.budgetIncome.push({ id: uid(), name: 'New income', amount: 0 });
+    queueSave(); renderBudget();
+  }
+  if (action==='add-expense'){
+    state.budgetExpense.push({ id: uid(), name: 'New expense', amount: 0 });
+    queueSave(); renderBudget();
+  }
+  if (action==='delete-item'){
+    const row = e.target.closest('.row[data-kind]');
+    const kind = row.dataset.kind, id = row.dataset.id;
+    if (kind==='income') state.budgetIncome = state.budgetIncome.filter(i=>i.id!==id);
+    else state.budgetExpense = state.budgetExpense.filter(i=>i.id!==id);
+    queueSave(); renderBudget(); renderDashboard();
+  }
+  if (action==='add-networth'){
+    const last = [...state.netWorthEntries].sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+    const base = last ? JSON.parse(JSON.stringify(last.assets)) : { chequing:0,tfsa:0,rrsp:0,nonReg:0,stock:0,homeValue:0,other:0 };
+    const newEntry = {
+      id: uid(), date: todayISO(),
+      assets: base,
+      liabilities: {
+        mortgage: state.debts.mortgage.balance,
+        heloc: state.debts.heloc.balance,
+        loc: state.debts.loc.balance,
+        creditCard: last ? last.liabilities.creditCard : 0,
+        otherDebt: last ? last.liabilities.otherDebt : 0
+      }
+    };
+    state.netWorthEntries.push(newEntry);
+    queueSave(); renderNetWorth(); renderDashboard();
+  }
+  if (action==='delete-networth'){
+    const card = e.target.closest('.card.asset[data-id]');
+    state.netWorthEntries = state.netWorthEntries.filter(en=>en.id!==card.dataset.id);
+    queueSave(); renderNetWorth(); renderDashboard();
+  }
+  if (action==='add-goal'){
+    showGoalForm();
+  }
+  if (action==='save-goal'){
+    saveGoalFromForm();
+  }
+  if (action==='cancel-goal'){
+    hideGoalForm();
+  }
+  if (action==='delete-goal'){
+    const card = e.target.closest('.card.goal[data-id]');
+    state.goals = state.goals.filter(g=>g.id!==card.dataset.id);
+    queueSave(); renderGoals(); renderDashboard();
+  }
+  if (action==='export-data'){
+    exportData();
+  }
+  if (action==='import-data'){
+    document.getElementById('importFileInput').click();
+  }
+});
+
+document.getElementById('importFileInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const statusEl = document.getElementById('importStatus');
+    try {
+      const parsed = JSON.parse(reader.result);
+      const requiredKeys = ['assumptions','paycheque','budgetIncome','budgetExpense','debts','netWorthEntries','goals'];
+      const missing = requiredKeys.filter(k => !(k in parsed));
+      if (missing.length){
+        statusEl.textContent = `That file doesn't look like a Red Menace Money export (missing: ${missing.join(', ')}).`;
+        statusEl.style.color = 'var(--rust)';
+        return;
+      }
+      state = parsed;
+      queueSave();
+      renderAll();
+      statusEl.textContent = 'Imported successfully.';
+      statusEl.style.color = 'var(--pine)';
+    } catch(err){
+      statusEl.textContent = "Couldn't read that file — make sure it's the .json export/starter file.";
+      statusEl.style.color = 'var(--rust)';
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `redmenacemoney-backup-${todayISO()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ---------------------------------------------------------
+   Goal creation form
+--------------------------------------------------------- */
+function showGoalForm(){
+  document.getElementById('goalForm').style.display = 'block';
+  document.getElementById('gfName').value = '';
+  document.getElementById('gfTrack').value = 'custom';
+  document.getElementById('gfTarget').value = 0;
+  document.getElementById('gfCurrent').value = 0;
+  document.getElementById('gfDate').value = '';
+}
+function hideGoalForm(){
+  document.getElementById('goalForm').style.display = 'none';
+}
+function saveGoalFromForm(){
+  const name = document.getElementById('gfName').value.trim();
+  if (!name){ document.getElementById('gfName').focus(); return; }
+  const track = document.getElementById('gfTrack').value;
+  const targetDate = document.getElementById('gfDate').value || null;
+  let targetValue = null, baselineValue = null, manualCurrent = 0;
+  if (track !== 'date'){
+    targetValue = Number(document.getElementById('gfTarget').value||0);
+    if (track === 'custom'){
+      manualCurrent = Number(document.getElementById('gfCurrent').value||0);
+      baselineValue = manualCurrent;
+    } else {
+      baselineValue = getCurrentValueForGoal({track});
+    }
+  }
+  state.goals.push({ id: uid(), name, track, targetValue, targetDate, baselineValue, manualCurrent, createdDate: todayISO() });
+  queueSave();
+  hideGoalForm();
+  renderGoals();
+  renderDashboard();
+}
+
+/* ---------------------------------------------------------
+   Init
+--------------------------------------------------------- */
+(async function init(){
+  document.getElementById('todayLabel').textContent = new Date().toLocaleDateString('en-CA',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
+  await loadState();
+  renderAll();
+})();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{/* offline caching is a nice-to-have, not required */});
+  });
+}
+</script>
+</body>
+</html>
