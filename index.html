@@ -332,6 +332,35 @@
     pointer-events:none;
   }
   .save-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .save-bar{
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    background:var(--amber-soft);
+    border-bottom:1px solid var(--amber);
+    color:#5A3B0E;
+    padding:10px 20px;
+    font-size:13px;
+    font-weight:600;
+    position:sticky;
+    top:0;
+    z-index:9;
+  }
+  .save-bar.show{display:flex;}
+  .save-bar-btns{display:flex;gap:8px;}
+  .sb-btn{
+    background:var(--rail);
+    color:#fff;
+    border:none;
+    border-radius:var(--radius);
+    padding:6px 14px;
+    font-family:'Archivo',sans-serif;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .sb-btn.ghost{background:none;color:var(--rail);border:1px solid var(--rail);}
 </style>
 </head>
 <body>
@@ -346,10 +375,20 @@
     <button data-view="paycheque">Paycheque</button>
     <button data-view="budget">Budget</button>
     <button data-view="debts">Debts</button>
+    <button data-view="investments">Investments</button>
     <button data-view="networth">Net Worth</button>
+    <button data-view="vacations">Vacations</button>
     <button data-view="goals">Goals</button>
   </nav>
 </header>
+
+<div class="save-bar" id="saveBar">
+  <span>You have unsaved changes</span>
+  <div class="save-bar-btns">
+    <button data-action="undo-changes" class="sb-btn ghost">Undo</button>
+    <button data-action="save-now" class="sb-btn">Save</button>
+  </div>
+</div>
 
 <main>
 
@@ -445,18 +484,81 @@
     <h2 class="view-title">Debts</h2>
     <p class="view-note">Update the balance whenever you get a statement. The payoff estimate recalculates from today using the rate, payment and any extra or lump-sum payments below.</p>
     <div id="debtsWrap"></div>
+    <div class="card" style="border-left-color:var(--pine);">
+      <h3>Interest savings calculator</h3>
+      <p class="view-note" style="margin-bottom:10px;">Pick a debt and test an extra monthly payment to see how much interest it would actually save you.</p>
+      <div class="field-grid">
+        <label>Debt</label>
+        <select id="calcDebtSelect">
+          <option value="mortgage">Mortgage</option>
+          <option value="heloc">HELOC</option>
+          <option value="loc">Line of Credit</option>
+        </select>
+        <label>Extra payment to test (per period)</label>
+        <input type="number" step="0.01" class="num-input" id="calcExtraTest" value="0">
+      </div>
+      <div id="calcResult" style="margin-top:10px;"></div>
+    </div>
+  </section>
+
+
+  <!-- INVESTMENTS -->
+  <section class="view" id="view-investments">
+    <h2 class="view-title">Investments</h2>
+    <p class="view-note">Your brokerage holdings — update this from a fresh statement export whenever you want it current. The total feeds into Net Worth's TFSA row automatically when you log a new snapshot.</p>
+    <div class="hero-grid">
+      <div class="hero-num">
+        <div class="lbl">Market value (CAD)</div>
+        <div class="val mono" id="invMarketValue">—</div>
+      </div>
+      <div class="hero-num">
+        <div class="lbl">Unrealized gain/loss</div>
+        <div class="val mono" id="invGainLoss">—</div>
+      </div>
+    </div>
+    <div class="card asset">
+      <h3>Cash &amp; exchange rate</h3>
+      <div class="field-grid">
+        <label>Cash (CAD)</label>
+        <input type="number" step="0.01" class="num-input" id="invCashCAD">
+        <label>Cash (USD)</label>
+        <input type="number" step="0.01" class="num-input" id="invCashUSD">
+        <label>USD → CAD exchange rate</label>
+        <input type="number" step="0.0001" class="num-input" id="invRate">
+      </div>
+    </div>
+    <div class="card">
+      <h3>Holdings</h3>
+      <table class="ledger" id="invTable"></table>
+      <button class="add-btn ghost" data-action="add-holding" style="margin-top:10px;">+ Add holding</button>
+    </div>
+    <div class="card">
+      <h3>Paste holdings from a spreadsheet</h3>
+      <p class="view-note" style="margin-bottom:8px;">Copy rows from Excel/Sheets (or a brokerage export) with columns in this order: Symbol, Name, Quantity, Last Price, Currency, Book Cost, Market Value — tab or comma separated, one holding per line — and paste below.</p>
+      <textarea id="pasteHoldingsArea" rows="4" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid var(--line);border-radius:var(--radius);padding:8px;"></textarea>
+      <button class="add-btn" data-action="paste-holdings" style="margin-top:8px;">Add pasted rows</button>
+      <p class="empty-state" id="pasteStatus" style="margin-top:6px;"></p>
+    </div>
   </section>
 
   <!-- NET WORTH -->
   <section class="view" id="view-networth">
     <h2 class="view-title">Net Worth</h2>
-    <p class="view-note">Log a snapshot whenever you check your accounts. Mortgage/HELOC/LOC are pre-filled from the Debts page but can be adjusted for that entry.</p>
+    <p class="view-note">Log a snapshot whenever you check your accounts. Mortgage/HELOC/LOC/TFSA are pre-filled from the Debts and Investments pages but can be adjusted for that entry.</p>
     <div class="card">
       <h3>Trend</h3>
       <canvas id="nwChart"></canvas>
     </div>
     <div id="nwWrap"></div>
     <button class="add-btn" data-action="add-networth">+ Log a snapshot</button>
+  </section>
+
+  <!-- VACATIONS -->
+  <section class="view" id="view-vacations">
+    <h2 class="view-title">Vacations</h2>
+    <p class="view-note">Set a budget for a trip, then track what it actually costs as bookings and expenses come in.</p>
+    <div id="vacationsWrap"></div>
+    <button class="add-btn" data-action="add-vacation">+ Add a vacation</button>
   </section>
 
   <!-- GOALS -->
@@ -595,6 +697,8 @@ const DEFAULT_STATE = {
       liabilities: { mortgage: 0, heloc: 0, loc: 0, creditCard: 0, otherDebt: 0 }
     }
   ],
+  investments: { cashCAD: 0, cashUSD: 0, exchangeRateUSDtoCAD: 1.35, holdings: [] },
+  vacations: [],
   goals: []
 };
 
@@ -612,6 +716,8 @@ async function loadState(){
     }
     if (raw){
       state = JSON.parse(raw);
+      if (!state.investments) state.investments = { cashCAD: 0, cashUSD: 0, exchangeRateUSDtoCAD: 1.35, holdings: [] };
+      if (!state.vacations) state.vacations = [];
     } else {
       state = JSON.parse(JSON.stringify(DEFAULT_STATE));
       await saveState();
@@ -619,6 +725,7 @@ async function loadState(){
   } catch(e){
     state = JSON.parse(JSON.stringify(DEFAULT_STATE));
   }
+  lastSavedState = JSON.parse(JSON.stringify(state));
 }
 
 async function saveState(){
@@ -628,16 +735,46 @@ async function saveState(){
     } else {
       localStorage.setItem('finance-state', JSON.stringify(state));
     }
-    flashSaved();
   } catch(e){
     console.error('Save failed', e);
+    return false;
+  }
+  return true;
+}
+
+/* ---------------------------------------------------------
+   Explicit save / undo (no autosave) — every edit just marks the
+   in-memory state "dirty"; nothing touches storage until Save is clicked.
+--------------------------------------------------------- */
+let lastSavedState = null;
+let dirty = false;
+
+function queueSave(){
+  dirty = true;
+  updateSaveBar();
+}
+
+function updateSaveBar(){
+  const bar = document.getElementById('saveBar');
+  if (bar) bar.classList.toggle('show', dirty);
+}
+
+async function doSaveNow(){
+  const ok = await saveState();
+  if (ok){
+    lastSavedState = JSON.parse(JSON.stringify(state));
+    dirty = false;
+    updateSaveBar();
+    flashSaved();
   }
 }
 
-let saveTimer=null;
-function queueSave(){
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveState, 400);
+function doUndo(){
+  if (!dirty) return;
+  state = JSON.parse(JSON.stringify(lastSavedState));
+  dirty = false;
+  updateSaveBar();
+  renderAll();
 }
 
 function flashSaved(){
@@ -646,6 +783,13 @@ function flashSaved(){
   clearTimeout(t._h);
   t._h = setTimeout(()=>t.classList.remove('show'), 900);
 }
+
+window.addEventListener('beforeunload', (e)=>{
+  if (dirty){
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 
 /* ---------------------------------------------------------
    Computed helpers
@@ -665,6 +809,24 @@ function netWorthOfEntry(e){
   const totalAssets = (a.chequing||0)+(a.tfsa||0)+(a.rrsp||0)+(a.nonReg||0)+(a.stock||0)+(a.homeValue||0)+(a.other||0);
   const totalLiab = (l.mortgage||0)+(l.heloc||0)+(l.loc||0)+(l.creditCard||0)+(l.otherDebt||0);
   return totalAssets-totalLiab;
+}
+function holdingValueCAD(h){
+  const rate = state.investments.exchangeRateUSDtoCAD || 1;
+  return h.currency === 'USD' ? h.marketValue*rate : h.marketValue;
+}
+function holdingBookCostCAD(h){
+  const rate = state.investments.exchangeRateUSDtoCAD || 1;
+  return h.currency === 'USD' ? h.bookCost*rate : h.bookCost;
+}
+function investmentsMarketValueCAD(){
+  const inv = state.investments;
+  const rate = inv.exchangeRateUSDtoCAD || 1;
+  const holdingsTotal = inv.holdings.reduce((s,h)=>s+holdingValueCAD(h),0);
+  return holdingsTotal + (inv.cashCAD||0) + (inv.cashUSD||0)*rate;
+}
+function investmentsBookCostCAD(){
+  const inv = state.investments;
+  return inv.holdings.reduce((s,h)=>s+holdingBookCostCAD(h),0);
 }
 function generatePaycheques(fromDate, count){
   const list = [];
@@ -844,6 +1006,44 @@ function renderDebts(){
     debtCardHTML('mortgage','Mortgage') +
     debtCardHTML('heloc','HELOC') +
     debtCardHTML('loc','Line of Credit');
+  renderCalculator();
+}
+
+function renderCalculator(){
+  const key = document.getElementById('calcDebtSelect').value;
+  const extraTest = Number(document.getElementById('calcExtraTest').value||0);
+  const d = state.debts[key];
+  const isMortgage = key === 'mortgage';
+
+  const current = amortize({
+    balance: d.balance, annualRate: d.rate, payment: d.payment,
+    frequency: isMortgage ? d.frequency : 'monthly',
+    extra: d.extra, lumpAmount: isMortgage ? d.lumpAmount : 0, lumpMonth: isMortgage ? d.lumpMonth : 0,
+    startDate: todayISO(), maxPeriods: 1000
+  });
+  const withExtra = amortize({
+    balance: d.balance, annualRate: d.rate, payment: d.payment,
+    frequency: isMortgage ? d.frequency : 'monthly',
+    extra: d.extra + extraTest, lumpAmount: isMortgage ? d.lumpAmount : 0, lumpMonth: isMortgage ? d.lumpMonth : 0,
+    startDate: todayISO(), maxPeriods: 1000
+  });
+
+  const el = document.getElementById('calcResult');
+  if (d.balance<=0){
+    el.innerHTML = `<p class="empty-state">This debt is already paid off.</p>`;
+    return;
+  }
+  const interestSaved = current.totalInterest - withExtra.totalInterest;
+  const monthsSaved = current.periodsToPayoff - withExtra.periodsToPayoff;
+  el.innerHTML = `
+    <div class="flow-line"><span>Total interest, current plan</span><span class="amt">${money(current.totalInterest)}</span></div>
+    <div class="flow-line"><span>Total interest, with ${money2(extraTest)} extra</span><span class="amt">${money(withExtra.totalInterest)}</span></div>
+    <div class="flow-line" style="border-top:1px solid var(--line);margin-top:6px;padding-top:8px;">
+      <span><strong>Interest saved</strong></span>
+      <span class="amt" style="color:${interestSaved>0?'var(--pine)':'var(--ink)'}">${money(interestSaved)}</span>
+    </div>
+    <div class="flow-line"><span>Paid off this much sooner</span><span class="amt">${monthsSaved>0?monthsSaved+' fewer periods':'—'}</span></div>
+  `;
 }
 
 /* ---------------------------------------------------------
@@ -875,6 +1075,74 @@ function nwEntryCardHTML(e){
       <span class="amt">${money(totalAssets-totalLiab)}</span>
     </div>
   </div>`;
+}
+
+/* ---------------------------------------------------------
+   Rendering: Investments
+--------------------------------------------------------- */
+function renderInvestments(){
+  const inv = state.investments;
+  document.getElementById('invCashCAD').value = inv.cashCAD;
+  document.getElementById('invCashUSD').value = inv.cashUSD;
+  document.getElementById('invRate').value = inv.exchangeRateUSDtoCAD;
+
+  const marketValue = investmentsMarketValueCAD();
+  const bookCost = investmentsBookCostCAD();
+  const gainLoss = marketValue - (bookCost + (inv.cashCAD||0) + (inv.cashUSD||0)*(inv.exchangeRateUSDtoCAD||1));
+  const holdingsGainLoss = inv.holdings.reduce((s,h)=>s+(holdingValueCAD(h)-holdingBookCostCAD(h)),0);
+  const gainLossPct = bookCost > 0 ? (holdingsGainLoss/bookCost)*100 : 0;
+
+  document.getElementById('invMarketValue').textContent = money(marketValue);
+  const glEl = document.getElementById('invGainLoss');
+  glEl.textContent = `${money(holdingsGainLoss)} (${gainLossPct>=0?'+':''}${gainLossPct.toFixed(1)}%)`;
+  glEl.className = 'val mono ' + (holdingsGainLoss<0 ? 'neg' : 'pos');
+
+  document.getElementById('invTable').innerHTML = `
+    <tr><th>Symbol</th><th>Name</th><th>Qty</th><th>Price</th><th>Ccy</th><th>Book Cost</th><th>Market Value</th><th>Gain/Loss</th><th></th></tr>
+    ${inv.holdings.map(h=>{
+      const gl = h.marketValue - h.bookCost;
+      const glPct = h.bookCost>0 ? (gl/h.bookCost)*100 : 0;
+      return `<tr data-id="${h.id}">
+        <td style="text-align:left;"><input type="text" class="num-input" style="width:70px;text-align:left;" data-field="symbol" value="${escapeAttr(h.symbol)}"></td>
+        <td style="text-align:left;"><input type="text" class="num-input" style="width:160px;text-align:left;" data-field="name" value="${escapeAttr(h.name)}"></td>
+        <td><input type="number" step="0.0001" class="num-input" style="width:70px;" data-field="quantity" value="${h.quantity}"></td>
+        <td><input type="number" step="0.0001" class="num-input" style="width:80px;" data-field="lastPrice" value="${h.lastPrice}"></td>
+        <td>
+          <select data-field="currency" style="width:66px;">
+            <option value="CAD" ${h.currency==='CAD'?'selected':''}>CAD</option>
+            <option value="USD" ${h.currency==='USD'?'selected':''}>USD</option>
+          </select>
+        </td>
+        <td><input type="number" step="0.01" class="num-input" style="width:90px;" data-field="bookCost" value="${h.bookCost}"></td>
+        <td><input type="number" step="0.01" class="num-input" style="width:90px;" data-field="marketValue" value="${h.marketValue}"></td>
+        <td style="color:${gl<0?'var(--rust)':'var(--pine)'}">${money(gl)} (${glPct>=0?'+':''}${glPct.toFixed(0)}%)</td>
+        <td><button class="icon-btn" data-action="delete-holding" title="Remove">✕</button></td>
+      </tr>`;
+    }).join('')}
+  `;
+}
+
+// Lightweight updates used while typing, so we never rebuild the table (and blow away
+// input focus) just because one field changed.
+function updateInvestmentsSummary(){
+  const inv = state.investments;
+  const marketValue = investmentsMarketValueCAD();
+  const holdingsGainLoss = inv.holdings.reduce((s,h)=>s+(holdingValueCAD(h)-holdingBookCostCAD(h)),0);
+  const bookCost = investmentsBookCostCAD();
+  const gainLossPct = bookCost > 0 ? (holdingsGainLoss/bookCost)*100 : 0;
+  document.getElementById('invMarketValue').textContent = money(marketValue);
+  const glEl = document.getElementById('invGainLoss');
+  glEl.textContent = `${money(holdingsGainLoss)} (${gainLossPct>=0?'+':''}${gainLossPct.toFixed(1)}%)`;
+  glEl.className = 'val mono ' + (holdingsGainLoss<0 ? 'neg' : 'pos');
+}
+function updateHoldingRowDisplay(rowEl, h){
+  const gl = h.marketValue - h.bookCost;
+  const glPct = h.bookCost>0 ? (gl/h.bookCost)*100 : 0;
+  const glCell = rowEl.children[7];
+  if (glCell){
+    glCell.textContent = `${money(gl)} (${glPct>=0?'+':''}${glPct.toFixed(0)}%)`;
+    glCell.style.color = gl<0 ? 'var(--rust)' : 'var(--pine)';
+  }
 }
 
 function renderNetWorth(){
@@ -979,6 +1247,67 @@ function renderGoals(){
 }
 
 /* ---------------------------------------------------------
+   Rendering: Vacations
+--------------------------------------------------------- */
+function vacationTotals(v){
+  const budgeted = v.items.reduce((s,i)=>s+Number(i.budgeted||0),0);
+  const actual = v.items.reduce((s,i)=>s+Number(i.actual||0),0);
+  return { budgeted, actual, remaining: budgeted-actual };
+}
+function vacationCardHTML(v){
+  const t = vacationTotals(v);
+  return `
+  <div class="card asset" data-id="${v.id}">
+    <div class="field-grid">
+      <label>Trip name</label>
+      <input type="text" class="num-input" style="width:100%;text-align:left;" data-vfield="name" value="${escapeAttr(v.name)}">
+      <label>Destination</label>
+      <input type="text" class="num-input" style="width:100%;text-align:left;" data-vfield="destination" value="${escapeAttr(v.destination)}">
+      <label>Start date</label>
+      <input type="date" data-vfield="startDate" value="${v.startDate||''}">
+      <label>End date</label>
+      <input type="date" data-vfield="endDate" value="${v.endDate||''}">
+      <label>Overall budget target</label>
+      <input type="number" step="0.01" class="num-input" data-vfield="budgetTarget" value="${v.budgetTarget}">
+    </div>
+    <h3 style="margin-top:14px;">Costs</h3>
+    <table class="ledger">
+      <tr><th>Category</th><th>Budgeted</th><th>Actual</th><th></th></tr>
+      ${v.items.map(item=>`
+        <tr data-item-id="${item.id}">
+          <td style="text-align:left;"><input type="text" class="num-input" style="width:140px;text-align:left;" data-ifield="category" value="${escapeAttr(item.category)}"></td>
+          <td><input type="number" step="0.01" class="num-input" style="width:90px;" data-ifield="budgeted" value="${item.budgeted}"></td>
+          <td><input type="number" step="0.01" class="num-input" style="width:90px;" data-ifield="actual" value="${item.actual}"></td>
+          <td><button class="icon-btn" data-action="delete-vac-item" title="Remove">✕</button></td>
+        </tr>`).join('')}
+    </table>
+    <button class="add-btn ghost" data-action="add-vac-item" style="margin-top:8px;">+ Add cost item</button>
+    <div class="flow-line" style="border-top:1px solid var(--line);margin-top:10px;padding-top:8px;"><span>Total budgeted</span><span class="amt" id="vacBudgeted-${v.id}">${money(t.budgeted)}</span></div>
+    <div class="flow-line"><span>Total actual</span><span class="amt" id="vacActual-${v.id}">${money(t.actual)}</span></div>
+    <div class="flow-line"><span id="vacRemLabel-${v.id}"><strong>${t.remaining>=0?'Remaining':'Over budget'}</strong></span><span class="amt" id="vacRemaining-${v.id}" style="color:${t.remaining<0?'var(--rust)':'var(--pine)'}">${money(Math.abs(t.remaining))}</span></div>
+    <div class="flow-line"><span>Vs. overall target (<span id="vacTargetLabel-${v.id}">${money(v.budgetTarget)}</span>)</span><span class="amt" id="vacVsTarget-${v.id}" style="color:${t.actual>v.budgetTarget?'var(--rust)':'var(--pine)'}">${money(v.budgetTarget-t.actual)} left</span></div>
+    <button class="icon-btn" data-action="delete-vacation" style="margin-top:8px;color:var(--rust);">✕ Remove this trip</button>
+  </div>`;
+}
+function updateVacationTotals(v){
+  const t = vacationTotals(v);
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  set(`vacBudgeted-${v.id}`, money(t.budgeted));
+  set(`vacActual-${v.id}`, money(t.actual));
+  const remEl = document.getElementById(`vacRemaining-${v.id}`);
+  if (remEl){ remEl.textContent = money(Math.abs(t.remaining)); remEl.style.color = t.remaining<0?'var(--rust)':'var(--pine)'; }
+  set(`vacRemLabel-${v.id}`, `<strong>${t.remaining>=0?'Remaining':'Over budget'}</strong>`);
+  set(`vacTargetLabel-${v.id}`, money(v.budgetTarget));
+  const vsEl = document.getElementById(`vacVsTarget-${v.id}`);
+  if (vsEl){ vsEl.textContent = `${money(v.budgetTarget-t.actual)} left`; vsEl.style.color = t.actual>v.budgetTarget?'var(--rust)':'var(--pine)'; }
+}
+function renderVacations(){
+  document.getElementById('vacationsWrap').innerHTML = state.vacations.length
+    ? state.vacations.map(vacationCardHTML).join('')
+    : `<p class="empty-state">No vacations planned yet.</p>`;
+}
+
+/* ---------------------------------------------------------
    Render all + navigation
 --------------------------------------------------------- */
 function renderAll(){
@@ -986,7 +1315,9 @@ function renderAll(){
   renderPaycheque();
   renderBudget();
   renderDebts();
+  renderInvestments();
   renderNetWorth();
+  renderVacations();
   renderGoals();
 }
 
@@ -1008,6 +1339,8 @@ document.addEventListener('input', (e)=>{
   const t = e.target;
 
   if (t.id==='retirementDateInput'){ state.assumptions.retirementDate = t.value; queueSave(); renderDashboard(); return; }
+
+  if (t.id==='calcDebtSelect' || t.id==='calcExtraTest'){ renderCalculator(); return; }
 
   if (t.id==='pcFirstDate'){ state.paycheque.firstDate = t.value; queueSave(); renderPaycheque(); renderDashboard(); renderBudget(); return; }
   if (t.id==='pcGross'){ state.paycheque.gross = Number(t.value||0); queueSave(); renderPaycheque(); renderDashboard(); renderBudget(); return; }
@@ -1053,6 +1386,45 @@ document.addEventListener('input', (e)=>{
     return;
   }
 
+  if (t.id==='invCashCAD'){ state.investments.cashCAD = Number(t.value||0); queueSave(); updateInvestmentsSummary(); renderDashboard(); return; }
+  if (t.id==='invCashUSD'){ state.investments.cashUSD = Number(t.value||0); queueSave(); updateInvestmentsSummary(); renderDashboard(); return; }
+  if (t.id==='invRate'){ state.investments.exchangeRateUSDtoCAD = Number(t.value||0); queueSave(); updateInvestmentsSummary(); renderDashboard(); return; }
+
+  const holdingRow = t.closest('tr[data-id]');
+  if (holdingRow && t.closest('#invTable')){
+    const h = state.investments.holdings.find(x=>x.id===holdingRow.dataset.id);
+    const field = t.dataset.field;
+    if (h && field){
+      if (field==='symbol' || field==='name' || field==='currency') h[field] = t.value;
+      else h[field] = Number(t.value||0);
+      queueSave();
+      updateHoldingRowDisplay(holdingRow, h);
+      updateInvestmentsSummary();
+      renderDashboard();
+    }
+    return;
+  }
+
+  const vacCard = t.closest('.card[data-id]');
+  if (vacCard && (t.dataset.vfield || t.dataset.ifield) && document.getElementById('vacationsWrap').contains(vacCard)){
+    const v = state.vacations.find(x=>x.id===vacCard.dataset.id);
+    if (v){
+      if (t.dataset.vfield){
+        const f = t.dataset.vfield;
+        v[f] = (f==='budgetTarget') ? Number(t.value||0) : t.value;
+      } else {
+        const itemRow = t.closest('tr[data-item-id]');
+        const item = v.items.find(i=>i.id===itemRow.dataset.itemId);
+        const f = t.dataset.ifield;
+        if (item) item[f] = (f==='category') ? t.value : Number(t.value||0);
+      }
+      queueSave();
+      updateVacationTotals(v);
+      renderDashboard();
+    }
+    return;
+  }
+
   const nwCard = t.closest('.card.asset[data-id]');
   if (nwCard && t.dataset.group){
     const entry = state.netWorthEntries.find(en=>en.id===nwCard.dataset.id);
@@ -1081,6 +1453,7 @@ document.addEventListener('input', (e)=>{
 
 document.addEventListener('change', (e)=>{
   const t = e.target;
+  if (t.id==='calcDebtSelect'){ renderCalculator(); return; }
   const debtCard = t.closest('.card[data-debt]');
   if (debtCard && t.tagName==='SELECT'){
     const key = debtCard.dataset.debt;
@@ -1088,6 +1461,12 @@ document.addEventListener('change', (e)=>{
     queueSave();
     renderDebts();
     renderDashboard();
+    return;
+  }
+  const holdingRow = t.closest('tr[data-id]');
+  if (holdingRow && t.closest('#invTable') && t.tagName==='SELECT'){
+    const h = state.investments.holdings.find(x=>x.id===holdingRow.dataset.id);
+    if (h){ h.currency = t.value; queueSave(); updateInvestmentsSummary(); renderDashboard(); }
   }
 });
 
@@ -1113,6 +1492,7 @@ document.addEventListener('click', (e)=>{
   if (action==='add-networth'){
     const last = [...state.netWorthEntries].sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
     const base = last ? JSON.parse(JSON.stringify(last.assets)) : { chequing:0,tfsa:0,rrsp:0,nonReg:0,stock:0,homeValue:0,other:0 };
+    base.tfsa = investmentsMarketValueCAD();
     const newEntry = {
       id: uid(), date: todayISO(),
       assets: base,
@@ -1132,6 +1512,66 @@ document.addEventListener('click', (e)=>{
     state.netWorthEntries = state.netWorthEntries.filter(en=>en.id!==card.dataset.id);
     queueSave(); renderNetWorth(); renderDashboard();
   }
+  if (action==='add-holding'){
+    state.investments.holdings.push({ id: uid(), symbol: '', name: '', quantity: 0, lastPrice: 0, currency: 'CAD', bookCost: 0, marketValue: 0 });
+    queueSave(); renderInvestments();
+  }
+  if (action==='paste-holdings'){
+    const raw = document.getElementById('pasteHoldingsArea').value;
+    const statusEl = document.getElementById('pasteStatus');
+    const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+    if (!lines.length){
+      statusEl.textContent = 'Paste some rows first.';
+      statusEl.style.color = 'var(--rust)';
+    } else {
+      let added = 0;
+      lines.forEach(line=>{
+        const parts = line.includes('\t') ? line.split('\t') : line.split(',');
+        const cleaned = parts.map(p=>p.trim().replace(/^"|"$/g,''));
+        if (cleaned.length < 7) return;
+        const [symbol,name,quantity,lastPrice,currency,bookCost,marketValue] = cleaned;
+        state.investments.holdings.push({
+          id: uid(), symbol: symbol||'', name: name||'',
+          quantity: Number(quantity)||0, lastPrice: Number(lastPrice)||0,
+          currency: (currency||'CAD').toUpperCase()==='USD' ? 'USD' : 'CAD',
+          bookCost: Number(bookCost)||0, marketValue: Number(marketValue)||0
+        });
+        added++;
+      });
+      statusEl.textContent = added ? `Added ${added} holding${added===1?'':'s'}.` : "Couldn't parse those rows — check they have all 7 columns.";
+      statusEl.style.color = added ? 'var(--pine)' : 'var(--rust)';
+      if (added){
+        document.getElementById('pasteHoldingsArea').value = '';
+        queueSave();
+        renderInvestments();
+      }
+    }
+  }
+  if (action==='delete-holding'){
+    const row = e.target.closest('tr[data-id]');
+    state.investments.holdings = state.investments.holdings.filter(h=>h.id!==row.dataset.id);
+    queueSave(); renderInvestments(); renderDashboard();
+  }
+  if (action==='add-vacation'){
+    state.vacations.push({ id: uid(), name: 'New trip', destination: '', startDate: '', endDate: '', budgetTarget: 0, items: [] });
+    queueSave(); renderVacations();
+  }
+  if (action==='delete-vacation'){
+    const card = e.target.closest('.card[data-id]');
+    state.vacations = state.vacations.filter(v=>v.id!==card.dataset.id);
+    queueSave(); renderVacations(); renderDashboard();
+  }
+  if (action==='add-vac-item'){
+    const card = e.target.closest('.card[data-id]');
+    const v = state.vacations.find(x=>x.id===card.dataset.id);
+    if (v){ v.items.push({ id: uid(), category: 'New item', budgeted: 0, actual: 0 }); queueSave(); renderVacations(); }
+  }
+  if (action==='delete-vac-item'){
+    const card = e.target.closest('.card[data-id]');
+    const row = e.target.closest('tr[data-item-id]');
+    const v = state.vacations.find(x=>x.id===card.dataset.id);
+    if (v){ v.items = v.items.filter(i=>i.id!==row.dataset.itemId); queueSave(); renderVacations(); }
+  }
   if (action==='add-goal'){
     showGoalForm();
   }
@@ -1148,6 +1588,12 @@ document.addEventListener('click', (e)=>{
   }
   if (action==='export-data'){
     exportData();
+  }
+  if (action==='save-now'){
+    doSaveNow();
+  }
+  if (action==='undo-changes'){
+    doUndo();
   }
   if (action==='import-data'){
     document.getElementById('importFileInput').click();
@@ -1170,6 +1616,7 @@ document.getElementById('importFileInput').addEventListener('change', (e)=>{
         return;
       }
       state = parsed;
+      if (!state.investments) state.investments = { cashCAD: 0, cashUSD: 0, exchangeRateUSDtoCAD: 1.35, holdings: [] };
       queueSave();
       renderAll();
       statusEl.textContent = 'Imported successfully.';
