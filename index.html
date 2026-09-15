@@ -332,35 +332,6 @@
     pointer-events:none;
   }
   .save-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-  .save-bar{
-    display:none;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    background:var(--amber-soft);
-    border-bottom:1px solid var(--amber);
-    color:#5A3B0E;
-    padding:10px 20px;
-    font-size:13px;
-    font-weight:600;
-    position:sticky;
-    top:0;
-    z-index:9;
-  }
-  .save-bar.show{display:flex;}
-  .save-bar-btns{display:flex;gap:8px;}
-  .sb-btn{
-    background:var(--rail);
-    color:#fff;
-    border:none;
-    border-radius:var(--radius);
-    padding:6px 14px;
-    font-family:'Archivo',sans-serif;
-    font-weight:700;
-    font-size:13px;
-    cursor:pointer;
-  }
-  .sb-btn.ghost{background:none;color:var(--rail);border:1px solid var(--rail);}
 </style>
 </head>
 <body>
@@ -376,19 +347,12 @@
     <button data-view="budget">Budget</button>
     <button data-view="debts">Debts</button>
     <button data-view="investments">Investments</button>
+    <button data-view="smith">Smith Maneuver</button>
     <button data-view="networth">Net Worth</button>
     <button data-view="vacations">Vacations</button>
     <button data-view="goals">Goals</button>
   </nav>
 </header>
-
-<div class="save-bar" id="saveBar">
-  <span>You have unsaved changes</span>
-  <div class="save-bar-btns">
-    <button data-action="undo-changes" class="sb-btn ghost">Undo</button>
-    <button data-action="save-now" class="sb-btn">Save</button>
-  </div>
-</div>
 
 <main>
 
@@ -417,11 +381,16 @@
     <div id="dashGoalsWrap"></div>
     <div class="card">
       <h3>Your data</h3>
-      <p class="view-note" style="margin-bottom:12px;">Everything here lives only on this device/browser. Export a backup any time, or import a file someone made for you (like a starter file with your real numbers already filled in).</p>
+      <p class="view-note" style="margin-bottom:12px;">Everything saves automatically as you type, right on this device/browser. Export a backup any time, or import a file someone made for you.</p>
       <button class="add-btn" data-action="export-data">Export data (.json)</button>
       <button class="add-btn ghost" data-action="import-data">Import data (.json)</button>
       <input type="file" id="importFileInput" accept="application/json,.json" style="display:none;">
       <p class="empty-state" id="importStatus" style="margin-top:8px;"></p>
+    </div>
+    <div class="card">
+      <h3>Backup history</h3>
+      <p class="view-note" style="margin-bottom:10px;">A snapshot is kept automatically every few minutes while you're using the app (up to the last 20). If something looks wrong, restore an earlier one.</p>
+      <div id="historyWrap"></div>
     </div>
   </section>
 
@@ -499,6 +468,61 @@
       </div>
       <div id="calcResult" style="margin-top:10px;"></div>
     </div>
+    <div class="card" style="border-left-color:var(--pine);">
+      <h3>Compare several extra-payment amounts at once</h3>
+      <div class="field-grid">
+        <label>Debt</label>
+        <select id="rangeDebtSelect">
+          <option value="mortgage">Mortgage</option>
+          <option value="heloc">HELOC</option>
+          <option value="loc">Line of Credit</option>
+          <option value="creditCard">Credit Card</option>
+        </select>
+      </div>
+      <table class="ledger" id="rangeTable" style="margin-top:10px;"></table>
+    </div>
+    <div class="card" style="border-left-color:var(--amber);">
+      <h3>Work backward from a target date</h3>
+      <p class="view-note" style="margin-bottom:10px;">Pick when you want to be debt-free on this one, and this tells you the extra payment per period needed to get there.</p>
+      <div class="field-grid">
+        <label>Debt</label>
+        <select id="revDebtSelect">
+          <option value="mortgage">Mortgage</option>
+          <option value="heloc">HELOC</option>
+          <option value="loc">Line of Credit</option>
+          <option value="creditCard">Credit Card</option>
+        </select>
+        <label>Target debt-free date</label>
+        <input type="date" id="revTargetDate">
+      </div>
+      <div id="revResult" style="margin-top:10px;"></div>
+    </div>
+    <div class="card" style="border-left-color:var(--amber);">
+      <h3>Invest or pay down debt?</h3>
+      <p class="view-note" style="margin-bottom:10px;">Compares putting extra money toward your highest-rate debt (a guaranteed "return" equal to that rate) against investing it at an assumed return, over the same stretch of time.</p>
+      <div class="field-grid">
+        <label>Extra $/month available</label>
+        <input type="number" step="0.01" class="num-input" id="ivdExtra" value="0">
+        <label>Assumed annual investment return</label>
+        <input type="number" step="0.1" class="num-input" id="ivdReturn" value="6">
+        <label>Years to compare over</label>
+        <input type="number" step="1" class="num-input" id="ivdYears" value="10">
+      </div>
+      <div id="ivdResult" style="margin-top:10px;"></div>
+    </div>
+    <div class="card" style="border-left-color:var(--pine);">
+      <h3>Pay the least interest — allocation optimizer</h3>
+      <p class="view-note" style="margin-bottom:10px;">Compares your current extra-payment split across all four debts against funneling the <em>same total extra dollars</em> at the highest-rate debt first (avalanche method) — the mathematically optimal way to minimize total interest. Figures are normalized to monthly, and any mortgage lump-sum is spread evenly across the year as an approximation.</p>
+      <div class="field-grid">
+        <label>Your current extra/month, all debts combined</label>
+        <span class="mono" id="optCurrentExtra" style="font-weight:600;"></span>
+        <label>Add hypothetical extra on top ($/month)</label>
+        <input type="number" step="0.01" class="num-input" id="optAddExtra" value="0">
+        <label>One-time lump sum available right now</label>
+        <input type="number" step="0.01" class="num-input" id="optLumpNow" value="0">
+      </div>
+      <div id="optResult" style="margin-top:10px;"></div>
+    </div>
   </section>
 
 
@@ -532,12 +556,61 @@
       <table class="ledger" id="invTable"></table>
       <button class="add-btn ghost" data-action="add-holding" style="margin-top:10px;">+ Add holding</button>
     </div>
+    <div class="card" style="border-left-color:var(--pine);">
+      <h3>Investment gains calculator</h3>
+      <p class="view-note" style="margin-bottom:10px;">A straightforward compound-growth projection — separate from the Smith Maneuver, for modelling regular contributions on their own.</p>
+      <div class="field-grid">
+        <label>Starting amount</label>
+        <input type="number" step="0.01" class="num-input" id="gcStart" value="0">
+        <label>Monthly contribution</label>
+        <input type="number" step="0.01" class="num-input" id="gcMonthly" value="0">
+        <label>Assumed annual return</label>
+        <input type="number" step="0.1" class="num-input" id="gcReturn" value="6">
+        <label>Years</label>
+        <input type="number" step="1" class="num-input" id="gcYears" value="10">
+      </div>
+      <div id="gcResult" style="margin-top:10px;"></div>
+    </div>
     <div class="card">
       <h3>Paste holdings from a spreadsheet</h3>
       <p class="view-note" style="margin-bottom:8px;">Copy rows from Excel/Sheets (or a brokerage export) with columns in this order: Symbol, Name, Quantity, Last Price, Currency, Book Cost, Market Value — tab or comma separated, one holding per line — and paste below.</p>
       <textarea id="pasteHoldingsArea" rows="4" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid var(--line);border-radius:var(--radius);padding:8px;"></textarea>
       <button class="add-btn" data-action="paste-holdings" style="margin-top:8px;">Add pasted rows</button>
       <p class="empty-state" id="pasteStatus" style="margin-top:6px;"></p>
+    </div>
+  </section>
+
+  <!-- SMITH MANEUVER -->
+  <section class="view" id="view-smith">
+    <h2 class="view-title">Smith Maneuver</h2>
+    <p class="view-note">Models re-borrowing your mortgage's principal paydown from the HELOC and investing it — the core Smith Maneuver mechanic. This is a projection based on assumptions you set below, not a guarantee, and isn't tax or investment advice.</p>
+    <div class="warn-box">Assumes your mortgage is on a readvanceable product (like your CIBC Home Power Plan) where HELOC room increases as the mortgage is paid down, that HELOC interest is paid out of pocket each period rather than added to the loan, and that the deductibility of that interest holds up under CRA's rules for your situation — worth confirming with an accountant before relying on the tax-refund number.</p>
+    <div class="card asset">
+      <h3>Assumptions</h3>
+      <div class="field-grid">
+        <label>Assumed annual investment return</label>
+        <input type="number" step="0.1" class="num-input" id="smAssumedReturn">
+        <label>Marginal tax rate (for refund estimate)</label>
+        <input type="number" step="0.1" class="num-input" id="smMarginalTax">
+      </div>
+    </div>
+    <div class="hero-grid">
+      <div class="hero-num">
+        <div class="lbl">Projected portfolio value at payoff</div>
+        <div class="val mono" id="smPortfolio">—</div>
+      </div>
+      <div class="hero-num">
+        <div class="lbl">HELOC investment loan at payoff</div>
+        <div class="val mono" id="smLoan">—</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Over the life of the mortgage</h3>
+      <div id="smSummary"></div>
+    </div>
+    <div class="card">
+      <h3>Year by year</h3>
+      <table class="ledger" id="smTable"></table>
     </div>
   </section>
 
@@ -655,6 +728,41 @@ function amortize({balance, annualRate, payment, frequency, extra=0, lumpAmount=
   };
 }
 
+// Runs the debt's own schedule forward from the last time we knew its balance to today,
+// so the balance reflects scheduled payments made since without needing manual entry.
+// Extra/lump-sum settings are assumed to have held for the whole gap — if actual extra
+// payments varied, the "Log a payment" feature on Mortgage/LOC is the more precise fix.
+function autoAdvanceDebtBalances(){
+  let changed = false;
+  const today = new Date(todayISO());
+  ['mortgage','heloc','loc','creditCard'].forEach(key=>{
+    const d = state.debts[key];
+    if (!d) return;
+    if (!d.balanceAsOfDate) d.balanceAsOfDate = todayISO();
+    if (d.balance<=0) return;
+    const asOf = new Date(d.balanceAsOfDate);
+    if (asOf >= today) return;
+    const isMortgage = key==='mortgage';
+    const r = amortize({
+      balance: d.balance, annualRate: d.rate, payment: d.payment,
+      frequency: isMortgage ? d.frequency : 'monthly',
+      extra: d.extra, lumpAmount: isMortgage ? d.lumpAmount : 0, lumpMonth: isMortgage ? d.lumpMonth : 0,
+      startDate: d.balanceAsOfDate, maxPeriods: 2000
+    });
+    let newBalance = d.balance;
+    let advanced = false;
+    for (const p of r.schedule){
+      if (p.date<=today){ newBalance = p.balance; advanced = true; } else break;
+    }
+    if (advanced){
+      d.balance = newBalance;
+      d.balanceAsOfDate = todayISO();
+      changed = true;
+    }
+  });
+  return changed;
+}
+
 /* ---------------------------------------------------------
    State
 --------------------------------------------------------- */
@@ -686,9 +794,10 @@ const DEFAULT_STATE = {
     { id: uid(), name: 'Discretionary/Other', amount: 0 }
   ],
   debts: {
-    mortgage: { balance: 0, rate: 0, payment: 0, frequency: 'biweekly', extra: 0, lumpAmount: 0, lumpMonth: 12 },
-    heloc: { balance: 0, rate: 0, payment: 0, extra: 0 },
-    loc: { balance: 0, rate: 0, payment: 0, extra: 0 }
+    mortgage: { balance: 0, rate: 0, payment: 0, frequency: 'biweekly', extra: 0, lumpAmount: 0, lumpMonth: 12, payments: [], balanceAsOfDate: todayISO() },
+    heloc: { balance: 0, rate: 0, payment: 0, extra: 0, balanceAsOfDate: todayISO() },
+    loc: { balance: 0, rate: 0, payment: 0, extra: 0, payments: [], balanceAsOfDate: todayISO() },
+    creditCard: { balance: 0, rate: 0, payment: 0, extra: 0, balanceAsOfDate: todayISO() }
   },
   netWorthEntries: [
     {
@@ -699,6 +808,7 @@ const DEFAULT_STATE = {
   ],
   investments: { cashCAD: 0, cashUSD: 0, exchangeRateUSDtoCAD: 1.35, holdings: [] },
   vacations: [],
+  smithManeuver: { investmentReturnRate: 0.06, marginalTaxRate: 0.30 },
   goals: []
 };
 
@@ -718,6 +828,13 @@ async function loadState(){
       state = JSON.parse(raw);
       if (!state.investments) state.investments = { cashCAD: 0, cashUSD: 0, exchangeRateUSDtoCAD: 1.35, holdings: [] };
       if (!state.vacations) state.vacations = [];
+      if (!state.smithManeuver) state.smithManeuver = { investmentReturnRate: 0.06, marginalTaxRate: 0.30 };
+      if (!state.debts.creditCard) state.debts.creditCard = { balance: 0, rate: 0, payment: 0, extra: 0 };
+      if (!state.debts.mortgage.payments) state.debts.mortgage.payments = [];
+      if (!state.debts.loc.payments) state.debts.loc.payments = [];
+      ['mortgage','heloc','loc','creditCard'].forEach(k=>{ if (!state.debts[k].balanceAsOfDate) state.debts[k].balanceAsOfDate = todayISO(); });
+      const advanced = autoAdvanceDebtBalances();
+      if (advanced) await saveState();
     } else {
       state = JSON.parse(JSON.stringify(DEFAULT_STATE));
       await saveState();
@@ -725,7 +842,6 @@ async function loadState(){
   } catch(e){
     state = JSON.parse(JSON.stringify(DEFAULT_STATE));
   }
-  lastSavedState = JSON.parse(JSON.stringify(state));
 }
 
 async function saveState(){
@@ -743,38 +859,73 @@ async function saveState(){
 }
 
 /* ---------------------------------------------------------
-   Explicit save / undo (no autosave) — every edit just marks the
-   in-memory state "dirty"; nothing touches storage until Save is clicked.
+   Autosave, with a rolling backup history so a save is never
+   the only copy of your data — restore any recent snapshot from
+   the Dashboard's "Your data" card.
 --------------------------------------------------------- */
-let lastSavedState = null;
-let dirty = false;
+const HISTORY_KEY = 'finance-state-history';
+const HISTORY_MAX = 20;
+const HISTORY_MIN_INTERVAL_MS = 5*60*1000; // don't snapshot more than once every 5 minutes
 
-function queueSave(){
-  dirty = true;
-  updateSaveBar();
+async function loadHistoryRaw(){
+  try{
+    const raw = hasClaudeStorage() ? (await window.storage.get(HISTORY_KEY,false))?.value : localStorage.getItem(HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e){ return []; }
 }
-
-function updateSaveBar(){
-  const bar = document.getElementById('saveBar');
-  if (bar) bar.classList.toggle('show', dirty);
+async function saveHistoryRaw(history){
+  const json = JSON.stringify(history);
+  try{
+    if (hasClaudeStorage()) await window.storage.set(HISTORY_KEY, json, false);
+    else localStorage.setItem(HISTORY_KEY, json);
+  } catch(e){ console.error('History save failed', e); }
 }
-
-async function doSaveNow(){
-  const ok = await saveState();
-  if (ok){
-    lastSavedState = JSON.parse(JSON.stringify(state));
-    dirty = false;
-    updateSaveBar();
-    flashSaved();
+async function maybeSnapshotHistory(){
+  const history = await loadHistoryRaw();
+  const last = history[history.length-1];
+  const now = Date.now();
+  if (!last || now-last.timestamp > HISTORY_MIN_INTERVAL_MS){
+    history.push({ timestamp: now, data: JSON.stringify(state) });
+    while (history.length>HISTORY_MAX) history.shift();
+    await saveHistoryRaw(history);
   }
 }
-
-function doUndo(){
-  if (!dirty) return;
-  state = JSON.parse(JSON.stringify(lastSavedState));
-  dirty = false;
-  updateSaveBar();
+async function restoreFromHistory(timestamp){
+  const history = await loadHistoryRaw();
+  const entry = history.find(h=>h.timestamp===timestamp);
+  if (!entry) return;
+  // snapshot what's here right now first, so restoring is itself reversible
+  history.push({ timestamp: Date.now(), data: JSON.stringify(state) });
+  while (history.length>HISTORY_MAX) history.shift();
+  await saveHistoryRaw(history);
+  state = JSON.parse(entry.data);
+  await saveState();
   renderAll();
+  flashSaved();
+}
+
+async function renderHistory(){
+  const history = await loadHistoryRaw();
+  const el = document.getElementById('historyWrap');
+  if (!el) return;
+  if (!history.length){
+    el.innerHTML = `<p class="empty-state">No backups yet — one gets saved automatically as you use the app.</p>`;
+    return;
+  }
+  el.innerHTML = history.slice().reverse().map(h=>{
+    const d = new Date(h.timestamp);
+    return `<div class="flow-line"><span>${d.toLocaleString('en-CA',{dateStyle:'medium',timeStyle:'short'})}</span><button class="add-btn ghost" data-action="restore-history" data-timestamp="${h.timestamp}" style="padding:4px 10px;font-size:12px;">Restore</button></div>`;
+  }).join('');
+}
+
+let saveTimer = null;
+function queueSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    await saveState();
+    flashSaved();
+    maybeSnapshotHistory();
+  }, 500);
 }
 
 function flashSaved(){
@@ -783,13 +934,6 @@ function flashSaved(){
   clearTimeout(t._h);
   t._h = setTimeout(()=>t.classList.remove('show'), 900);
 }
-
-window.addEventListener('beforeunload', (e)=>{
-  if (dirty){
-    e.preventDefault();
-    e.returnValue = '';
-  }
-});
 
 /* ---------------------------------------------------------
    Computed helpers
@@ -859,6 +1003,7 @@ function incomeForMonth(year, month){ // month: 0-11
 function renderDashboard(){
   document.getElementById('dashNetWorth').textContent = money(computeLatestNetWorth());
   document.getElementById('dashTotalDebt').textContent = money(totalDebtNow());
+  renderHistory();
 
   if (state.assumptions.retirementDate){
     const rd = new Date(state.assumptions.retirementDate);
@@ -973,12 +1118,35 @@ function debtCardHTML(key, title){
     payoffLine = `<div class="ok-box">Projected payoff: <strong>${fmtDate(result.payoffDate)}</strong> (${ym.years} yrs ${ym.months} mo from today, total interest ${money(result.totalInterest)})</div>`;
   }
 
+  const hasPaymentLog = key === 'mortgage' || key === 'loc';
+  const paymentLogHTML = hasPaymentLog ? `
+    <div style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px;">
+      <h3 style="font-size:14px;">Log a payment</h3>
+      <p class="view-note" style="margin-bottom:8px;">For a one-time or small daily payment you actually made — this reduces the balance above immediately. (The "Extra payment" field above is different: it's a recurring amount added to every future payment for projections, and doesn't touch today's balance on its own.)</p>
+      <div class="field-grid">
+        <label>Amount paid</label>
+        <input type="number" step="0.01" class="num-input" data-payamt="${key}" id="payAmt-${key}" placeholder="0.00">
+      </div>
+      <button class="add-btn" data-action="log-payment" data-debt-key="${key}" style="margin-top:6px;">Log payment &amp; reduce balance</button>
+      ${d.payments && d.payments.length ? `
+        <p style="font-size:12px;color:var(--ink-soft);margin-top:10px;margin-bottom:4px;">Logged payments (total ${money(d.payments.reduce((s,p)=>s+p.amount,0))}):</p>
+        <table class="ledger">
+          <tr><th>Date</th><th>Amount</th><th></th></tr>
+          ${d.payments.slice().reverse().map(p=>`<tr data-payment-id="${p.id}"><td>${fmtDate(p.date)}</td><td>${money2(p.amount)}</td><td><button class="icon-btn" data-action="delete-payment" data-debt-key="${key}" title="Remove">✕</button></td></tr>`).join('')}
+        </table>
+      ` : ''}
+    </div>
+  ` : '';
+
   return `
   <div class="card debt" data-debt="${key}">
     <h3>${title}</h3>
     <div class="field-grid">
       <label>Current balance</label>
       <input type="number" step="0.01" class="num-input" data-field="balance" value="${d.balance}">
+    </div>
+    <p class="empty-state" style="margin:2px 0 8px 0;">As of ${d.balanceAsOfDate?fmtDate(d.balanceAsOfDate):'today'} — updates automatically between visits based on your rate/payment/extra settings below, or edit it directly after a statement.</p>
+    <div class="field-grid">
       <label>Annual interest rate (%)</label>
       <input type="number" step="0.01" class="num-input" data-field="rate" value="${(d.rate*100).toFixed(2)}">
       <label>Payment per period</label>
@@ -998,6 +1166,7 @@ function debtCardHTML(key, title){
       <input type="number" min="1" max="12" step="1" class="num-input" data-field="lumpMonth" value="${d.lumpMonth}">` : ''}
     </div>
     ${payoffLine}
+    ${paymentLogHTML}
   </div>`;
 }
 
@@ -1005,8 +1174,237 @@ function renderDebts(){
   document.getElementById('debtsWrap').innerHTML =
     debtCardHTML('mortgage','Mortgage') +
     debtCardHTML('heloc','HELOC') +
-    debtCardHTML('loc','Line of Credit');
+    debtCardHTML('loc','Line of Credit') +
+    debtCardHTML('creditCard','Credit Card');
   renderCalculator();
+  renderRangeTable();
+  renderReverseCalculator();
+  renderInvestVsDebt();
+  renderOptimizer();
+}
+
+function monthlyEquivalentExtra(){
+  const d = state.debts;
+  const mortMonthlyExtra = d.mortgage.frequency==='biweekly' ? d.mortgage.extra*26/12 : d.mortgage.extra;
+  const mortLumpMonthly = (d.mortgage.lumpAmount||0)/12;
+  return mortMonthlyExtra + mortLumpMonthly + (d.heloc.extra||0) + (d.loc.extra||0) + (d.creditCard.extra||0);
+}
+
+// strategy: 'avalanche' (highest rate first, minimizes interest) or 'snowball' (smallest balance first, for motivation)
+// lumpAmount is applied once, at month 0, before any regular payments, to whichever debt the strategy prioritizes.
+function simulateDebtStrategy(debtList, extraPool, strategy, lumpAmount, maxMonths){
+  let debts = debtList.map(d=>({...d}));
+  const sortFn = strategy==='snowball' ? (a,b)=>a.balance-b.balance : (a,b)=>b.rate-a.rate;
+  let totalInterest = 0;
+  let month = 0;
+
+  if (lumpAmount>0){
+    let lump = lumpAmount;
+    const order = debts.filter(d=>d.balance>0).sort(sortFn);
+    for (const dd of order){
+      if (lump<=0) break;
+      if (dd.balance<=lump){ lump -= dd.balance; dd.balance = 0; }
+      else { dd.balance -= lump; lump = 0; }
+    }
+  }
+
+  while (debts.some(d=>d.balance>0.01) && month<maxMonths){
+    month++;
+    let freedUp = 0;
+    debts.forEach(d=>{
+      if (d.balance<=0){ freedUp += d.payment; return; }
+      const interest = d.balance*(d.rate/12);
+      totalInterest += interest;
+      let principal = d.payment - interest;
+      if (principal<0) principal = 0;
+      d.balance = Math.max(0, d.balance-principal);
+    });
+    let pool = extraPool + freedUp;
+    const order = debts.filter(d=>d.balance>0).sort(sortFn);
+    for (const dd of order){
+      if (pool<=0) break;
+      if (dd.balance<=pool){ pool -= dd.balance; dd.balance = 0; }
+      else { dd.balance -= pool; pool = 0; }
+    }
+  }
+  return { totalInterest, months: month };
+}
+
+function renderRangeTable(){
+  const key = document.getElementById('rangeDebtSelect').value;
+  const d = state.debts[key];
+  const el = document.getElementById('rangeTable');
+  if (d.balance<=0){ el.innerHTML = `<tr><td class="empty-state">This debt is already paid off.</td></tr>`; return; }
+  const isMortgage = key==='mortgage';
+  const amounts = [0,50,100,200,300,500,1000];
+  const rows = amounts.map(extra=>{
+    const r = amortize({
+      balance: d.balance, annualRate: d.rate, payment: d.payment,
+      frequency: isMortgage ? d.frequency : 'monthly',
+      extra: d.extra+extra, lumpAmount: isMortgage ? d.lumpAmount : 0, lumpMonth: isMortgage ? d.lumpMonth : 0,
+      startDate: todayISO(), maxPeriods: 1200
+    });
+    return { extra, payoffDate: r.payoffDate, totalInterest: r.totalInterest };
+  });
+  const baseInterest = rows[0].totalInterest;
+  el.innerHTML = `
+    <tr><th>+Extra/period</th><th>Payoff date</th><th>Total interest</th><th>Saved</th></tr>
+    ${rows.map(r=>`<tr><td>${r.extra===0?'(none)':money2(r.extra)}</td><td>${r.payoffDate?fmtDate(r.payoffDate):'—'}</td><td>${money(r.totalInterest)}</td><td>${money(baseInterest-r.totalInterest)}</td></tr>`).join('')}
+  `;
+}
+
+function findRequiredExtra(d, isMortgage, targetDate, maxPeriods){
+  let lo = 0, hi = d.balance*2 + 1000;
+  for (let i=0; i<60; i++){
+    const mid = (lo+hi)/2;
+    const r = amortize({
+      balance: d.balance, annualRate: d.rate, payment: d.payment,
+      frequency: isMortgage ? d.frequency : 'monthly',
+      extra: mid, lumpAmount: isMortgage ? d.lumpAmount : 0, lumpMonth: isMortgage ? d.lumpMonth : 0,
+      startDate: todayISO(), maxPeriods
+    });
+    if (r.payoffDate && r.payoffDate<=targetDate) hi = mid; else lo = mid;
+  }
+  return hi;
+}
+
+function renderReverseCalculator(){
+  const key = document.getElementById('revDebtSelect').value;
+  const targetStr = document.getElementById('revTargetDate').value;
+  const el = document.getElementById('revResult');
+  const d = state.debts[key];
+  const isMortgage = key==='mortgage';
+  if (d.balance<=0){ el.innerHTML = `<p class="empty-state">This debt is already paid off.</p>`; return; }
+  if (!targetStr){ el.innerHTML = `<p class="empty-state">Pick a target date above.</p>`; return; }
+  const targetDate = new Date(targetStr);
+  if (targetDate <= new Date()){ el.innerHTML = `<p class="empty-state">Pick a date in the future.</p>`; return; }
+
+  const requiredExtra = findRequiredExtra(d, isMortgage, targetDate, 1000);
+  const check = amortize({
+    balance: d.balance, annualRate: d.rate, payment: d.payment,
+    frequency: isMortgage ? d.frequency : 'monthly',
+    extra: requiredExtra, lumpAmount: isMortgage ? d.lumpAmount : 0, lumpMonth: isMortgage ? d.lumpMonth : 0,
+    startDate: todayISO(), maxPeriods: 1000
+  });
+  const shortfallNote = (check.payoffDate && check.payoffDate>targetDate)
+    ? `<p class="warn-box" style="margin-top:8px;">Even paying it off as fast as possible, the earliest realistic payoff is ${fmtDate(check.payoffDate)} — that target date isn't reachable for this balance.</p>` : '';
+  el.innerHTML = `
+    <div class="flow-line"><span>Required extra per period</span><span class="amt">${money2(requiredExtra)}</span></div>
+    <div class="flow-line"><span>Projected payoff at that pace</span><span class="amt">${check.payoffDate?fmtDate(check.payoffDate):'—'}</span></div>
+    <div class="flow-line"><span>Total interest at that pace</span><span class="amt">${money(check.totalInterest)}</span></div>
+    ${shortfallNote}
+  `;
+}
+
+function renderInvestVsDebt(){
+  const extra = Number(document.getElementById('ivdExtra').value||0);
+  const assumedReturn = Number(document.getElementById('ivdReturn').value||0)/100;
+  const years = Number(document.getElementById('ivdYears').value||0);
+  const el = document.getElementById('ivdResult');
+
+  const d = state.debts;
+  const debtLabel = {'mortgage':'Mortgage','heloc':'HELOC','loc':'Line of Credit','creditCard':'Credit Card'};
+  const debts = [
+    {key:'mortgage', rate:d.mortgage.rate, balance:d.mortgage.balance},
+    {key:'heloc', rate:d.heloc.rate, balance:d.heloc.balance},
+    {key:'loc', rate:d.loc.rate, balance:d.loc.balance},
+    {key:'creditCard', rate:d.creditCard.rate, balance:d.creditCard.balance}
+  ].filter(x=>x.balance>0);
+  if (!debts.length){
+    el.innerHTML = `<p class="empty-state">No debt balances — might as well invest it.</p>`;
+    return;
+  }
+  const highestRateDebt = debts.slice().sort((a,b)=>b.rate-a.rate)[0];
+  const months = years*12;
+
+  let investValue = 0;
+  const investMonthlyRate = assumedReturn/12;
+  for (let m=0; m<months; m++) investValue = investValue*(1+investMonthlyRate) + extra;
+
+  let debtSavedValue = 0;
+  const debtMonthlyRate = highestRateDebt.rate/12;
+  for (let m=0; m<months; m++) debtSavedValue = debtSavedValue*(1+debtMonthlyRate) + extra;
+
+  const winner = debtSavedValue > investValue ? 'debt' : 'invest';
+  el.innerHTML = `
+    <div class="flow-line"><span>Paying down ${debtLabel[highestRateDebt.key]} instead (guaranteed ${(highestRateDebt.rate*100).toFixed(2)}%)</span><span class="amt">${money(debtSavedValue)}</span></div>
+    <div class="flow-line"><span>Investing instead (assumed ${(assumedReturn*100).toFixed(1)}%)</span><span class="amt">${money(investValue)}</span></div>
+    <div class="flow-line" style="border-top:1px solid var(--line);margin-top:6px;padding-top:8px;">
+      <span><strong>${winner==='debt'?'Paying down debt wins':'Investing wins'}</strong> by</span>
+      <span class="amt" style="color:var(--pine)">${money(Math.abs(debtSavedValue-investValue))}</span>
+    </div>
+    <p class="empty-state" style="margin-top:8px;">This compares the guaranteed rate from paying off ${debtLabel[highestRateDebt.key]} against your assumed investment return. Paying down debt always "returns" exactly its interest rate; real investment returns aren't guaranteed and can be negative in any given year.</p>
+  `;
+}
+
+function renderOptimizer(){
+  const currentExtra = monthlyEquivalentExtra();
+  document.getElementById('optCurrentExtra').textContent = money2(currentExtra);
+  const addExtra = Number(document.getElementById('optAddExtra').value||0);
+  const lumpNow = Number(document.getElementById('optLumpNow').value||0);
+  const totalPool = currentExtra + addExtra;
+
+  const d = state.debts;
+  const anyBalance = d.mortgage.balance>0 || d.heloc.balance>0 || d.loc.balance>0 || d.creditCard.balance>0;
+  const el = document.getElementById('optResult');
+  if (!anyBalance){
+    el.innerHTML = `<p class="empty-state">No debt balances to optimize.</p>`;
+    return;
+  }
+
+  const baselineInterest =
+    amortizeDebtTotal('mortgage') + amortizeDebtTotal('heloc') + amortizeDebtTotal('loc') + amortizeDebtTotal('creditCard');
+
+  const monthlyDebts = [
+    { key:'mortgage', balance: d.mortgage.balance, rate: d.mortgage.rate, payment: d.mortgage.frequency==='biweekly' ? d.mortgage.payment*26/12 : d.mortgage.payment },
+    { key:'heloc', balance: d.heloc.balance, rate: d.heloc.rate, payment: d.heloc.payment },
+    { key:'loc', balance: d.loc.balance, rate: d.loc.rate, payment: d.loc.payment },
+    { key:'creditCard', balance: d.creditCard.balance, rate: d.creditCard.rate, payment: d.creditCard.payment }
+  ].filter(x=>x.balance>0);
+  const debtLabel = {'mortgage':'Mortgage','heloc':'HELOC','loc':'Line of Credit','creditCard':'Credit Card'};
+
+  const avalanche = simulateDebtStrategy(monthlyDebts, totalPool, 'avalanche', lumpNow, 1200);
+  const snowball = simulateDebtStrategy(monthlyDebts, totalPool, 'snowball', lumpNow, 1200);
+
+  const avalancheOrder = monthlyDebts.slice().sort((a,b)=>b.rate-a.rate);
+  const snowballOrder = monthlyDebts.slice().sort((a,b)=>a.balance-b.balance);
+  const savedVsSnowball = snowball.totalInterest - avalanche.totalInterest;
+
+  let lumpLine = '';
+  if (lumpNow>0){
+    const target = avalancheOrder[0];
+    lumpLine = `<p class="ok-box" style="margin-top:8px;">If you have ${money(lumpNow)} to put toward debt right now, the least-interest move is putting all of it on <strong>${debtLabel[target.key]}</strong> (your highest rate at ${(target.rate*100).toFixed(2)}%) — that's reflected in the avalanche numbers below.</p>`;
+  }
+
+  el.innerHTML = `
+    ${lumpLine}
+    <div class="flow-line"><span>Current split (as configured)</span><span class="amt">${money(baselineInterest)}</span></div>
+    <div class="flow-line"><span>Avalanche (highest rate first) — least interest</span><span class="amt" style="color:var(--pine)">${money(avalanche.totalInterest)}</span></div>
+    <div class="flow-line"><span>Snowball (smallest balance first) — most motivating</span><span class="amt">${money(snowball.totalInterest)}</span></div>
+    <div class="flow-line" style="border-top:1px solid var(--line);margin-top:6px;padding-top:8px;">
+      <span><strong>Interest saved: current → avalanche</strong></span>
+      <span class="amt" style="color:${baselineInterest-avalanche.totalInterest>0?'var(--pine)':'var(--ink)'}">${money(baselineInterest-avalanche.totalInterest)}</span>
+    </div>
+    <div class="flow-line">
+      <span>What snowball's motivation costs you vs. avalanche</span>
+      <span class="amt" style="color:var(--rust)">${money(savedVsSnowball)}</span>
+    </div>
+    <p class="empty-state" style="margin-top:8px;">Avalanche order: ${avalancheOrder.map(x=>debtLabel[x.key]+' ('+(x.rate*100).toFixed(2)+'%)').join(' → ')}</p>
+    <p class="empty-state">Snowball order: ${snowballOrder.map(x=>debtLabel[x.key]+' ('+money(x.balance)+')').join(' → ')}</p>
+  `;
+}
+
+function amortizeDebtTotal(key){
+  const d = state.debts[key];
+  if (d.balance<=0) return 0;
+  const isMortgage = key==='mortgage';
+  const r = amortize({
+    balance: d.balance, annualRate: d.rate, payment: d.payment,
+    frequency: isMortgage ? d.frequency : 'monthly',
+    extra: d.extra, lumpAmount: isMortgage ? d.lumpAmount : 0, lumpMonth: isMortgage ? d.lumpMonth : 0,
+    startDate: todayISO(), maxPeriods: 1200
+  });
+  return r.totalInterest;
 }
 
 function renderCalculator(){
@@ -1120,6 +1518,7 @@ function renderInvestments(){
       </tr>`;
     }).join('')}
   `;
+  renderGainsCalculator();
 }
 
 // Lightweight updates used while typing, so we never rebuild the table (and blow away
@@ -1143,6 +1542,108 @@ function updateHoldingRowDisplay(rowEl, h){
     glCell.textContent = `${money(gl)} (${glPct>=0?'+':''}${glPct.toFixed(0)}%)`;
     glCell.style.color = gl<0 ? 'var(--rust)' : 'var(--pine)';
   }
+}
+
+/* ---------------------------------------------------------
+   Smith Maneuver
+--------------------------------------------------------- */
+function computeSmithManeuver(){
+  const sm = state.smithManeuver;
+  const d = state.debts.mortgage;
+  const heloc = state.debts.heloc;
+  if (d.balance<=0) return null;
+
+  const result = amortize({
+    balance: d.balance, annualRate: d.rate, payment: d.payment,
+    frequency: d.frequency, extra: d.extra, lumpAmount: d.lumpAmount, lumpMonth: d.lumpMonth,
+    startDate: todayISO(), maxPeriods: 1000
+  });
+  const periodsPerYear = d.frequency==='biweekly' ? 26 : 12;
+  const investPeriodRate = Math.pow(1+sm.investmentReturnRate, 1/periodsPerYear)-1;
+  const helocPeriodRate = (heloc.rate||0)/periodsPerYear;
+
+  let helocLoanBalance = 0;
+  let portfolioValue = 0;
+  let cumulativeInterest = 0;
+  let cumulativeInvested = 0;
+  const yearly = [];
+  let lastYearIndex = -1;
+
+  result.schedule.forEach((p, idx)=>{
+    // HELOC interest on the investment loan accrues on the balance and is assumed paid
+    // out of pocket each period (not capitalized into the loan) — the common real-world setup.
+    const interestThisPeriod = helocLoanBalance*helocPeriodRate;
+    cumulativeInterest += interestThisPeriod;
+    portfolioValue = portfolioValue*(1+investPeriodRate) + p.principal;
+    helocLoanBalance += p.principal;
+    cumulativeInvested += p.principal;
+
+    const yearIndex = Math.floor(idx/periodsPerYear);
+    const snapshot = { year: yearIndex+1, portfolioValue, helocLoanBalance, cumulativeInterest, cumulativeInvested };
+    if (yearIndex !== lastYearIndex){ yearly.push(snapshot); lastYearIndex = yearIndex; }
+    else yearly[yearly.length-1] = snapshot;
+  });
+
+  return {
+    portfolioValue, helocLoanBalance, cumulativeInterest, cumulativeInvested,
+    taxRefund: cumulativeInterest*(sm.marginalTaxRate||0),
+    yearly, periodsToPayoff: result.periodsToPayoff
+  };
+}
+
+function renderSmith(){
+  document.getElementById('smAssumedReturn').value = (state.smithManeuver.investmentReturnRate*100).toFixed(2);
+  document.getElementById('smMarginalTax').value = (state.smithManeuver.marginalTaxRate*100).toFixed(2);
+
+  const r = computeSmithManeuver();
+  if (!r){
+    document.getElementById('smPortfolio').textContent = '—';
+    document.getElementById('smLoan').textContent = '—';
+    document.getElementById('smSummary').innerHTML = `<p class="empty-state">Your mortgage balance is $0 — nothing to model.</p>`;
+    document.getElementById('smTable').innerHTML = '';
+    return;
+  }
+  document.getElementById('smPortfolio').textContent = money(r.portfolioValue);
+  document.getElementById('smLoan').textContent = money(r.helocLoanBalance);
+  const net = r.portfolioValue - r.helocLoanBalance;
+  document.getElementById('smSummary').innerHTML = `
+    <div class="flow-line"><span>Total principal re-borrowed &amp; invested</span><span class="amt">${money(r.cumulativeInvested)}</span></div>
+    <div class="flow-line"><span>Total HELOC interest paid (tax-deductible)</span><span class="amt">${money(r.cumulativeInterest)}</span></div>
+    <div class="flow-line"><span>Estimated cumulative tax refund</span><span class="amt">${money(r.taxRefund)}</span></div>
+    <div class="flow-line" style="border-top:1px solid var(--line);margin-top:6px;padding-top:8px;">
+      <span><strong>Net position (portfolio − HELOC loan)</strong></span>
+      <span class="amt" style="color:${net>=0?'var(--pine)':'var(--rust)'}">${money(net)}</span>
+    </div>
+  `;
+  document.getElementById('smTable').innerHTML = `
+    <tr><th>Year</th><th>Invested to date</th><th>Portfolio value</th><th>HELOC loan</th><th>Interest to date</th></tr>
+    ${r.yearly.map(y=>`<tr><td>${y.year}</td><td>${money(y.cumulativeInvested)}</td><td>${money(y.portfolioValue)}</td><td>${money(y.helocLoanBalance)}</td><td>${money(y.cumulativeInterest)}</td></tr>`).join('')}
+  `;
+}
+
+function renderGainsCalculator(){
+  const start = Number(document.getElementById('gcStart').value||0);
+  const monthly = Number(document.getElementById('gcMonthly').value||0);
+  const annualReturn = Number(document.getElementById('gcReturn').value||0)/100;
+  const years = Number(document.getElementById('gcYears').value||0);
+  const months = Math.round(years*12);
+  const monthlyRate = annualReturn/12;
+
+  let value = start;
+  for (let m=0; m<months; m++){
+    value = value*(1+monthlyRate) + monthly;
+  }
+  const totalContributions = start + monthly*months;
+  const totalGrowth = value - totalContributions;
+
+  document.getElementById('gcResult').innerHTML = `
+    <div class="flow-line"><span>Total contributed</span><span class="amt">${money(totalContributions)}</span></div>
+    <div class="flow-line"><span>Total growth</span><span class="amt" style="color:var(--pine)">${money(totalGrowth)}</span></div>
+    <div class="flow-line" style="border-top:1px solid var(--line);margin-top:6px;padding-top:8px;">
+      <span><strong>Projected value after ${years} years</strong></span>
+      <span class="amt">${money(value)}</span>
+    </div>
+  `;
 }
 
 function renderNetWorth(){
@@ -1189,8 +1690,9 @@ function drawNWChart(sorted){
    Rendering: Goals
 --------------------------------------------------------- */
 const TRACK_LABELS = {
-  netWorth: 'Net worth', totalDebt: 'Total debt', mortgage: 'Mortgage', heloc: 'HELOC', loc: 'Line of Credit', custom: 'Custom', date: 'Date only'
+  netWorth: 'Net worth', totalDebt: 'Total debt', mortgage: 'Mortgage', heloc: 'HELOC', loc: 'Line of Credit', creditCard: 'Credit Card', custom: 'Custom', date: 'Date only'
 };
+const DEBT_TRACKS = ['mortgage','heloc','loc','creditCard'];
 function getCurrentValueForGoal(g){
   switch(g.track){
     case 'netWorth': return computeLatestNetWorth();
@@ -1198,6 +1700,7 @@ function getCurrentValueForGoal(g){
     case 'mortgage': return state.debts.mortgage.balance;
     case 'heloc': return state.debts.heloc.balance;
     case 'loc': return state.debts.loc.balance;
+    case 'creditCard': return state.debts.creditCard.balance;
     case 'custom': return Number(g.manualCurrent||0);
     default: return null;
   }
@@ -1217,20 +1720,43 @@ function goalProgress(g){
   if (target === base) return current>=target ? 1 : 0;
   return clamp((current-base)/(target-base), 0, 1);
 }
+// For a debt-payoff goal, how much the very next scheduled payment will bring the balance down —
+// answers "how does making a payment move me toward this target".
+function nextPaymentImpact(g){
+  if (!DEBT_TRACKS.includes(g.track)) return null;
+  const d = state.debts[g.track];
+  if (!d || d.balance<=0) return null;
+  const isMortgage = g.track==='mortgage';
+  const r = amortize({
+    balance: d.balance, annualRate: d.rate, payment: d.payment,
+    frequency: isMortgage ? d.frequency : 'monthly',
+    extra: d.extra, lumpAmount: isMortgage ? d.lumpAmount : 0, lumpMonth: isMortgage ? d.lumpMonth : 0,
+    startDate: todayISO(), maxPeriods: 1
+  });
+  return r.schedule[0] ? r.schedule[0].principal : null;
+}
 function goalCardHTML(g){
   const pct = goalProgress(g);
   const pctLabel = Math.round(pct*100)+'%';
   let currentLabel = '';
   if (g.track === 'date'){
     currentLabel = g.targetDate ? (()=>{ const ym = yearsMonthsBetween(new Date(), g.targetDate); return `${ym.years} yrs ${ym.months} mo remaining`; })() : 'No date set';
+  } else if (DEBT_TRACKS.includes(g.track) || g.track==='totalDebt'){
+    const cur = getCurrentValueForGoal(g);
+    currentLabel = g.baselineValue!=null
+      ? `Started at ${money(g.baselineValue)} → now ${money(cur)} → paid off at ${money(g.targetValue||0)}`
+      : `${money(cur)} — paid off at ${money(g.targetValue||0)}`;
   } else {
     const cur = getCurrentValueForGoal(g);
     currentLabel = `${money(cur)} of ${money(g.targetValue)} target`;
   }
+  const impact = nextPaymentImpact(g);
+  const impactLine = impact!=null ? `<div class="goal-meta" style="margin-top:2px;"><span>Your next payment reduces this by ~${money2(impact)}</span></div>` : '';
   return `
   <div class="card goal" data-id="${g.id}">
     <h3>${escapeAttr(g.name)} <button class="icon-btn" style="float:right;" data-action="delete-goal">✕</button></h3>
     <div class="goal-meta"><span>${currentLabel}</span><span>${g.targetDate?fmtDate(g.targetDate):''}</span></div>
+    ${impactLine}
     <div class="track">
       <div class="fill" style="width:${pct*100}%;"></div>
       <div class="marker" style="left:${pct*100}%;">🚂</div>
@@ -1316,6 +1842,7 @@ function renderAll(){
   renderBudget();
   renderDebts();
   renderInvestments();
+  renderSmith();
   renderNetWorth();
   renderVacations();
   renderGoals();
@@ -1324,6 +1851,11 @@ function renderAll(){
 function setActiveView(view){
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id==='view-'+view));
   document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  // These views derive their numbers from other tabs (debts, investments), so refresh
+  // on switch rather than trying to catch every place those source values can change.
+  if (view==='smith') renderSmith();
+  if (view==='debts'){ renderCalculator(); renderRangeTable(); renderReverseCalculator(); renderInvestVsDebt(); renderOptimizer(); }
+  if (view==='dashboard') renderDashboard();
 }
 
 document.getElementById('tabNav').addEventListener('click', (e)=>{
@@ -1341,6 +1873,16 @@ document.addEventListener('input', (e)=>{
   if (t.id==='retirementDateInput'){ state.assumptions.retirementDate = t.value; queueSave(); renderDashboard(); return; }
 
   if (t.id==='calcDebtSelect' || t.id==='calcExtraTest'){ renderCalculator(); return; }
+  if (t.id==='rangeDebtSelect'){ renderRangeTable(); return; }
+  if (t.id==='revDebtSelect' || t.id==='revTargetDate'){ renderReverseCalculator(); return; }
+  if (['ivdExtra','ivdReturn','ivdYears'].includes(t.id)){ renderInvestVsDebt(); return; }
+  if (t.id==='optAddExtra'){ renderOptimizer(); return; }
+  if (t.id==='optLumpNow'){ renderOptimizer(); return; }
+
+  if (t.id==='smAssumedReturn'){ state.smithManeuver.investmentReturnRate = Number(t.value||0)/100; queueSave(); renderSmith(); return; }
+  if (t.id==='smMarginalTax'){ state.smithManeuver.marginalTaxRate = Number(t.value||0)/100; queueSave(); renderSmith(); return; }
+
+  if (['gcStart','gcMonthly','gcReturn','gcYears'].includes(t.id)){ renderGainsCalculator(); return; }
 
   if (t.id==='pcFirstDate'){ state.paycheque.firstDate = t.value; queueSave(); renderPaycheque(); renderDashboard(); renderBudget(); return; }
   if (t.id==='pcGross'){ state.paycheque.gross = Number(t.value||0); queueSave(); renderPaycheque(); renderDashboard(); renderBudget(); return; }
@@ -1371,6 +1913,7 @@ document.addEventListener('input', (e)=>{
       if (field==='frequency'){ state.debts[key][field] = val; }
       else if (field==='rate'){ state.debts[key][field] = Number(val||0)/100; }
       else { state.debts[key][field] = Number(val||0); }
+      if (field==='balance'){ state.debts[key].balanceAsOfDate = todayISO(); }
       queueSave();
       renderDebts();
       renderDashboard();
@@ -1454,6 +1997,8 @@ document.addEventListener('input', (e)=>{
 document.addEventListener('change', (e)=>{
   const t = e.target;
   if (t.id==='calcDebtSelect'){ renderCalculator(); return; }
+  if (t.id==='rangeDebtSelect'){ renderRangeTable(); return; }
+  if (t.id==='revDebtSelect'){ renderReverseCalculator(); return; }
   const debtCard = t.closest('.card[data-debt]');
   if (debtCard && t.tagName==='SELECT'){
     const key = debtCard.dataset.debt;
@@ -1500,7 +2045,7 @@ document.addEventListener('click', (e)=>{
         mortgage: state.debts.mortgage.balance,
         heloc: state.debts.heloc.balance,
         loc: state.debts.loc.balance,
-        creditCard: last ? last.liabilities.creditCard : 0,
+        creditCard: state.debts.creditCard.balance,
         otherDebt: last ? last.liabilities.otherDebt : 0
       }
     };
@@ -1552,6 +2097,33 @@ document.addEventListener('click', (e)=>{
     state.investments.holdings = state.investments.holdings.filter(h=>h.id!==row.dataset.id);
     queueSave(); renderInvestments(); renderDashboard();
   }
+  if (action==='log-payment'){
+    const key = e.target.dataset.debtKey;
+    const input = document.getElementById(`payAmt-${key}`);
+    const amt = Number(input.value||0);
+    if (amt>0){
+      state.debts[key].balance = Math.max(0, state.debts[key].balance - amt);
+      state.debts[key].balanceAsOfDate = todayISO();
+      state.debts[key].payments.push({ id: uid(), date: todayISO(), amount: amt });
+      queueSave();
+      renderDebts();
+      renderDashboard();
+    }
+  }
+  if (action==='delete-payment'){
+    const key = e.target.dataset.debtKey;
+    const row = e.target.closest('tr[data-payment-id]');
+    const p = state.debts[key].payments.find(x=>x.id===row.dataset.paymentId);
+    if (p){
+      // undo: put the amount back on the balance since the logged payment is being removed
+      state.debts[key].balance += p.amount;
+      state.debts[key].balanceAsOfDate = todayISO();
+      state.debts[key].payments = state.debts[key].payments.filter(x=>x.id!==row.dataset.paymentId);
+      queueSave();
+      renderDebts();
+      renderDashboard();
+    }
+  }
   if (action==='add-vacation'){
     state.vacations.push({ id: uid(), name: 'New trip', destination: '', startDate: '', endDate: '', budgetTarget: 0, items: [] });
     queueSave(); renderVacations();
@@ -1589,11 +2161,8 @@ document.addEventListener('click', (e)=>{
   if (action==='export-data'){
     exportData();
   }
-  if (action==='save-now'){
-    doSaveNow();
-  }
-  if (action==='undo-changes'){
-    doUndo();
+  if (action==='restore-history'){
+    restoreFromHistory(Number(e.target.dataset.timestamp));
   }
   if (action==='import-data'){
     document.getElementById('importFileInput').click();
@@ -1617,6 +2186,12 @@ document.getElementById('importFileInput').addEventListener('change', (e)=>{
       }
       state = parsed;
       if (!state.investments) state.investments = { cashCAD: 0, cashUSD: 0, exchangeRateUSDtoCAD: 1.35, holdings: [] };
+      if (!state.vacations) state.vacations = [];
+      if (!state.smithManeuver) state.smithManeuver = { investmentReturnRate: 0.06, marginalTaxRate: 0.30 };
+      if (!state.debts.creditCard) state.debts.creditCard = { balance: 0, rate: 0, payment: 0, extra: 0 };
+      if (!state.debts.mortgage.payments) state.debts.mortgage.payments = [];
+      if (!state.debts.loc.payments) state.debts.loc.payments = [];
+      ['mortgage','heloc','loc','creditCard'].forEach(k=>{ if (!state.debts[k].balanceAsOfDate) state.debts[k].balanceAsOfDate = todayISO(); });
       queueSave();
       renderAll();
       statusEl.textContent = 'Imported successfully.';
