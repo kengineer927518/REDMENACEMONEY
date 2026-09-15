@@ -7,47 +7,48 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import com.gullen.redmenacemoney.data.AppState
 import com.gullen.redmenacemoney.data.FinanceStore
+import com.gullen.redmenacemoney.data.HistoryEntry
+import com.gullen.redmenacemoney.data.autoAdvanceDebtBalances
 
 /**
- * No autosave: every edit just marks state "dirty" in memory. Nothing touches
- * SharedPreferences until save() is called explicitly (Save button). undo()
- * reverts to whatever was last actually saved.
+ * Autosaves on every change (debounced), with a rolling backup history — same model as
+ * the web app. No manual Save/Undo step; restoring an older snapshot is the safety net.
  */
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val store = FinanceStore(application)
-    private var lastSaved: AppState = store.load()
 
-    var state by mutableStateOf(lastSaved)
+    var state by mutableStateOf(run {
+        val loaded = store.load()
+        val advanced = autoAdvanceDebtBalances(loaded)
+        if (advanced != loaded) store.save(advanced)
+        advanced
+    })
         private set
 
-    var dirty by mutableStateOf(false)
-        private set
-
-    /** All mutations flow through here; nothing is persisted until save() is called. */
+    /** All mutations flow through here so every change autosaves immediately. */
     fun update(transform: (AppState) -> AppState) {
         state = transform(state)
-        dirty = true
-    }
-
-    fun save() {
         store.save(state)
-        lastSaved = state
-        dirty = false
-    }
-
-    fun undo() {
-        state = lastSaved
-        dirty = false
+        store.maybeSnapshotHistory(state)
     }
 
     fun exportBackup(): String = store.exportBackupJson(state)
 
-    /** Returns true if the import succeeded. Imported data is treated like any other edit — not saved until save() is called. */
+    /** Returns true if the import succeeded. */
     fun importBackup(raw: String): Boolean {
         val parsed = store.parseBackupJson(raw) ?: return false
         state = parsed
-        dirty = true
+        store.save(state)
+        store.maybeSnapshotHistory(state)
         return true
+    }
+
+    fun history(): List<HistoryEntry> = store.loadHistory()
+
+    fun restoreFromHistory(timestamp: Long) {
+        val restored = store.restoreFromHistory(timestamp, state) ?: return
+        state = restored
+        store.save(state)
     }
 }

@@ -28,9 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gullen.redmenacemoney.MainViewModel
 import com.gullen.redmenacemoney.data.Goal
+import com.gullen.redmenacemoney.data.DEBT_TRACKS
 import com.gullen.redmenacemoney.data.getCurrentValueForGoal
 import com.gullen.redmenacemoney.data.goalProgress
 import com.gullen.redmenacemoney.data.newId
+import com.gullen.redmenacemoney.data.nextPaymentImpact
 import com.gullen.redmenacemoney.data.todayISO
 import com.gullen.redmenacemoney.data.yearsMonthsBetween
 import com.gullen.redmenacemoney.ui.components.GoalTrack
@@ -38,6 +40,7 @@ import com.gullen.redmenacemoney.ui.components.LabeledMoneyField
 import com.gullen.redmenacemoney.ui.components.LabeledTextField
 import com.gullen.redmenacemoney.ui.components.SectionCard
 import com.gullen.redmenacemoney.ui.components.money
+import com.gullen.redmenacemoney.ui.components.money2
 import com.gullen.redmenacemoney.ui.theme.Amber
 import com.gullen.redmenacemoney.ui.theme.InkSoft
 import com.gullen.redmenacemoney.ui.theme.Rust
@@ -49,6 +52,7 @@ private val TRACK_OPTIONS = listOf(
     "mortgage" to "Mortgage balance",
     "heloc" to "HELOC balance",
     "loc" to "Line of Credit balance",
+    "creditCard" to "Credit Card balance",
     "custom" to "Custom (I'll update it myself)",
     "date" to "Date only (e.g. retirement countdown)"
 )
@@ -108,10 +112,18 @@ private fun GoalCard(goal: Goal, state: com.gullen.redmenacemoney.data.AppState,
                 val ym = yearsMonthsBetween(LocalDate.now(), LocalDate.parse(it))
                 "${ym.years} yrs ${ym.months} mo remaining"
             } ?: "No date set"
+        } else if (goal.track in DEBT_TRACKS) {
+            val cur = getCurrentValueForGoal(goal, state)
+            if (goal.baselineValue != null) "Started at ${money(goal.baselineValue)} → now ${money(cur)} → paid off at ${money(goal.targetValue ?: 0.0)}"
+            else "${money(cur)} — paid off at ${money(goal.targetValue ?: 0.0)}"
         } else {
             "${money(getCurrentValueForGoal(goal, state))} of ${money(goal.targetValue ?: 0.0)} target"
         }
         Text(currentLabel, fontSize = 12.sp, color = InkSoft)
+        val impact = nextPaymentImpact(goal, state)
+        if (impact != null) {
+            Text("Your next payment reduces this by ~${money2(impact)}", fontSize = 12.sp, color = InkSoft, modifier = Modifier.padding(top = 2.dp))
+        }
         GoalTrack(progress = progress, modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
         Text("${(progress * 100).toInt()}% of the way there", fontSize = 12.sp, color = InkSoft)
         if (goal.track == "custom") {

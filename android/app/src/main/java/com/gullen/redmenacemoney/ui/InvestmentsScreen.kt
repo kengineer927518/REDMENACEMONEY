@@ -92,6 +92,61 @@ fun InvestmentsScreen(vm: MainViewModel) {
                 vm.update { s -> s.copy(investments = s.investments.copy(holdings = s.investments.holdings + Holding())) }
             }, modifier = Modifier.padding(vertical = 6.dp)) { Text("+ Add holding") }
         }
+        item { InvestmentGainsCalculatorCard() }
+    }
+}
+
+@Composable
+private fun InvestmentGainsCalculatorCard() {
+    var startText by remember { mutableStateOf("0") }
+    var monthlyText by remember { mutableStateOf("0") }
+    var returnText by remember { mutableStateOf("6") }
+    var yearsText by remember { mutableStateOf("10") }
+
+    SectionCard(accentColor = Pine) {
+        Text("Investment gains calculator", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+        Text(
+            "A straightforward compound-growth projection — separate from the Smith Maneuver, for modelling regular contributions on their own.",
+            fontSize = 12.sp, color = InkSoft, modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+        )
+        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+            Text("Starting amount", modifier = Modifier.weight(1f), fontSize = 13.sp)
+            OutlinedTextField(value = startText, onValueChange = { startText = it }, modifier = Modifier.width(100.dp), singleLine = true)
+        }
+        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+            Text("Monthly contribution", modifier = Modifier.weight(1f), fontSize = 13.sp)
+            OutlinedTextField(value = monthlyText, onValueChange = { monthlyText = it }, modifier = Modifier.width(100.dp), singleLine = true)
+        }
+        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+            Text("Assumed annual return (%)", modifier = Modifier.weight(1f), fontSize = 13.sp)
+            OutlinedTextField(value = returnText, onValueChange = { returnText = it }, modifier = Modifier.width(100.dp), singleLine = true)
+        }
+        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+            Text("Years", modifier = Modifier.weight(1f), fontSize = 13.sp)
+            OutlinedTextField(value = yearsText, onValueChange = { yearsText = it }, modifier = Modifier.width(100.dp), singleLine = true)
+        }
+
+        val start = startText.toDoubleOrNull() ?: 0.0
+        val monthly = monthlyText.toDoubleOrNull() ?: 0.0
+        val annualReturn = (returnText.toDoubleOrNull() ?: 0.0) / 100
+        val years = yearsText.toIntOrNull() ?: 0
+        val months = years * 12
+        val monthlyRate = annualReturn / 12
+        var value = start
+        repeat(months) { value = value * (1 + monthlyRate) + monthly }
+        val totalContributions = start + monthly * months
+        val totalGrowth = value - totalContributions
+
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Total contributed", fontSize = 13.sp); MoneyText(totalContributions, fontSize = 13.sp)
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Total growth", fontSize = 13.sp); MoneyText(totalGrowth, color = Pine, fontSize = 13.sp)
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Projected value after $years years", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            MoneyText(value, fontSize = 14.sp)
+        }
     }
 }
 

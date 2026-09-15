@@ -29,6 +29,13 @@ data class BudgetItem(
 )
 
 @Serializable
+data class DebtPayment(
+    val id: String = newId(),
+    val date: String = todayISO(),
+    val amount: Double = 0.0
+)
+
+@Serializable
 data class Debt(
     val balance: Double = 0.0,
     val rate: Double = 0.0,
@@ -36,14 +43,17 @@ data class Debt(
     val frequency: String = "monthly", // "monthly" | "biweekly"
     val extra: Double = 0.0,
     val lumpAmount: Double = 0.0,
-    val lumpMonth: Int = 12
+    val lumpMonth: Int = 12,
+    val payments: List<DebtPayment> = emptyList(),
+    val balanceAsOfDate: String = todayISO()
 )
 
 @Serializable
 data class Debts(
     val mortgage: Debt = Debt(frequency = "biweekly", lumpMonth = 12),
     val heloc: Debt = Debt(),
-    val loc: Debt = Debt()
+    val loc: Debt = Debt(),
+    val creditCard: Debt = Debt()
 )
 
 @Serializable
@@ -80,7 +90,7 @@ data class NetWorthEntry(
     val netWorth: Double get() = assets.total - liabilities.total
 }
 
-// track: "netWorth" | "totalDebt" | "mortgage" | "heloc" | "loc" | "custom" | "date"
+// track: "netWorth" | "totalDebt" | "mortgage" | "heloc" | "loc" | "creditCard" | "custom" | "date"
 @Serializable
 data class Goal(
     val id: String = newId(),
@@ -146,6 +156,12 @@ data class Vacation(
 }
 
 @Serializable
+data class SmithManeuverSettings(
+    val investmentReturnRate: Double = 0.06,
+    val marginalTaxRate: Double = 0.30
+)
+
+@Serializable
 data class AppState(
     val assumptions: Assumptions = Assumptions(),
     val paycheque: Paycheque = Paycheque(),
@@ -155,9 +171,10 @@ data class AppState(
     val netWorthEntries: List<NetWorthEntry> = listOf(NetWorthEntry()),
     val investments: Investments = Investments(),
     val vacations: List<Vacation> = emptyList(),
+    val smithManeuver: SmithManeuverSettings = SmithManeuverSettings(),
     val goals: List<Goal> = emptyList()
 ) {
-    val totalDebtNow: Double get() = debts.mortgage.balance + debts.heloc.balance + debts.loc.balance
+    val totalDebtNow: Double get() = debts.mortgage.balance + debts.heloc.balance + debts.loc.balance + debts.creditCard.balance
 
     val latestNetWorth: Double get() =
         netWorthEntries.maxByOrNull { LocalDate.parse(it.date) }?.netWorth ?: 0.0

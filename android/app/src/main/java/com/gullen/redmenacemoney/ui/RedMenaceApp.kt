@@ -1,25 +1,18 @@
 package com.gullen.redmenacemoney.ui
 
-import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -33,9 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gullen.redmenacemoney.MainViewModel
-import com.gullen.redmenacemoney.ui.theme.Amber
-import com.gullen.redmenacemoney.ui.theme.AmberSoft
-import com.gullen.redmenacemoney.ui.theme.Ink
 import com.gullen.redmenacemoney.ui.theme.Rail
 
 private enum class Tab(val label: String) {
@@ -44,6 +34,7 @@ private enum class Tab(val label: String) {
     BUDGET("Budget"),
     DEBTS("Debts"),
     INVESTMENTS("Investments"),
+    SMITH("Smith Maneuver"),
     NET_WORTH("Net Worth"),
     VACATIONS("Vacations"),
     GOALS("Goals")
@@ -53,27 +44,6 @@ private enum class Tab(val label: String) {
 @Composable
 fun RedMenaceApp(vm: MainViewModel) {
     var selected by remember { mutableStateOf(Tab.DASHBOARD) }
-    var showExitDialog by remember { mutableStateOf(false) }
-
-    // Closest Android equivalent to a browser's "leave without saving?" prompt:
-    // intercept the system back button when there are unsaved changes.
-    BackHandler(enabled = vm.dirty) {
-        showExitDialog = true
-    }
-
-    if (showExitDialog) {
-        AlertDialog(
-            onDismissRequest = { showExitDialog = false },
-            title = { Text("Unsaved changes") },
-            text = { Text("You have changes that haven't been saved yet. Save before leaving?") },
-            confirmButton = {
-                TextButton(onClick = { vm.save(); showExitDialog = false }) { Text("Save") }
-            },
-            dismissButton = {
-                TextButton(onClick = { vm.undo(); showExitDialog = false }) { Text("Discard") }
-            }
-        )
-    }
 
     Scaffold(
         topBar = {
@@ -101,19 +71,6 @@ fun RedMenaceApp(vm: MainViewModel) {
                         }
                     }
                 }
-                if (vm.dirty) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().background(AmberSoft).padding(horizontal = 16.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Unsaved changes", color = Ink, fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
-                        Row {
-                            OutlinedButton(onClick = { vm.undo() }) { Text("Undo") }
-                            androidx.compose.foundation.layout.Spacer(Modifier.padding(horizontal = 4.dp))
-                            Button(onClick = { vm.save() }) { Text("Save") }
-                        }
-                    }
-                }
             }
         }
     ) { padding ->
@@ -124,6 +81,7 @@ fun RedMenaceApp(vm: MainViewModel) {
                 Tab.BUDGET -> BudgetScreen(vm)
                 Tab.DEBTS -> DebtsScreen(vm)
                 Tab.INVESTMENTS -> InvestmentsScreen(vm)
+                Tab.SMITH -> SmithManeuverScreen(vm)
                 Tab.NET_WORTH -> NetWorthScreen(vm)
                 Tab.VACATIONS -> VacationsScreen(vm)
                 Tab.GOALS -> GoalsScreen(vm)

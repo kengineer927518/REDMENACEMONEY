@@ -25,15 +25,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gullen.redmenacemoney.MainViewModel
 import com.gullen.redmenacemoney.data.Goal
+import com.gullen.redmenacemoney.data.DEBT_TRACKS
 import com.gullen.redmenacemoney.data.getCurrentValueForGoal
 import com.gullen.redmenacemoney.data.goalProgress
 import com.gullen.redmenacemoney.data.incomeForMonth
+import com.gullen.redmenacemoney.data.nextPaymentImpact
 import com.gullen.redmenacemoney.data.yearsMonthsBetween
 import com.gullen.redmenacemoney.ui.components.GoalTrack
 import com.gullen.redmenacemoney.ui.components.LabeledTextField
 import com.gullen.redmenacemoney.ui.components.MoneyText
 import com.gullen.redmenacemoney.ui.components.SectionCard
 import com.gullen.redmenacemoney.ui.components.money
+import com.gullen.redmenacemoney.ui.components.money2
 import com.gullen.redmenacemoney.ui.theme.Amber
 import com.gullen.redmenacemoney.ui.theme.Ink
 import com.gullen.redmenacemoney.ui.theme.InkSoft
@@ -148,7 +151,7 @@ fun DashboardScreen(vm: MainViewModel) {
             SectionCard(accentColor = Amber) {
                 Text("Your data", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 Text(
-                    "Everything here lives only on this phone. Export a backup any time, or import a starter file with real numbers already filled in.",
+                    "Everything here lives only on this phone, and saves automatically as you go. Export a backup any time, or import a starter file with real numbers already filled in.",
                     fontSize = 12.sp, color = InkSoft, modifier = Modifier.padding(top = 4.dp, bottom = 10.dp)
                 )
                 Row {
@@ -161,6 +164,27 @@ fun DashboardScreen(vm: MainViewModel) {
                 }
                 importStatus?.let {
                     Text(it, fontSize = 12.sp, color = if (it.startsWith("Imported")) Pine else Rust, modifier = Modifier.padding(top = 8.dp))
+                }
+            }
+        }
+        item {
+            SectionCard {
+                Text("Version history", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(
+                    "A backup gets snapshotted automatically as you use the app (at most every few minutes). Restoring safety-snapshots whatever's here first, so a restore is itself reversible.",
+                    fontSize = 12.sp, color = InkSoft, modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+                )
+                val history = remember(state) { vm.history() }
+                if (history.isEmpty()) {
+                    Text("No backups yet — one gets saved automatically as you use the app.", fontSize = 12.sp, color = InkSoft)
+                } else {
+                    history.asReversed().forEach { entry ->
+                        val dt = java.time.Instant.ofEpochMilli(entry.timestamp).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()
+                        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(dt.format(java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a")), fontSize = 12.sp)
+                            OutlinedButton(onClick = { vm.restoreFromHistory(entry.timestamp) }) { Text("Restore", fontSize = 12.sp) }
+                        }
+                    }
                 }
             }
         }
@@ -178,10 +202,18 @@ private fun GoalSummaryCard(goal: Goal, vm: MainViewModel) {
                 val ym = yearsMonthsBetween(LocalDate.now(), LocalDate.parse(it))
                 "${ym.years} yrs ${ym.months} mo remaining"
             } ?: "No date set"
+        } else if (goal.track in DEBT_TRACKS) {
+            val cur = getCurrentValueForGoal(goal, state)
+            if (goal.baselineValue != null) "Started at ${money(goal.baselineValue)} → now ${money(cur)} → paid off at ${money(goal.targetValue ?: 0.0)}"
+            else "${money(cur)} — paid off at ${money(goal.targetValue ?: 0.0)}"
         } else {
             "${money(getCurrentValueForGoal(goal, state))} of ${money(goal.targetValue ?: 0.0)} target"
         }
         Text(currentLabel, fontSize = 12.sp, color = InkSoft)
+        val impact = nextPaymentImpact(goal, state)
+        if (impact != null) {
+            Text("Your next payment reduces this by ~${money2(impact)}", fontSize = 12.sp, color = InkSoft, modifier = Modifier.padding(top = 2.dp))
+        }
         GoalTrack(progress = progress, modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
         Text("${(progress * 100).toInt()}% of the way there", fontSize = 12.sp, color = InkSoft)
     }
