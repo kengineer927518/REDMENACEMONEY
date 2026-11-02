@@ -2178,6 +2178,15 @@ document.getElementById('importFileInput').addEventListener('change', (e)=>{
     try {
       const parsed = JSON.parse(reader.result);
       const requiredKeys = ['assumptions','paycheque','budgetIncome','budgetExpense','debts','netWorthEntries','goals'];
+      // A file containing only an "investments" section updates just the holdings and leaves everything else alone.
+      if (parsed.investments && Array.isArray(parsed.investments.holdings) && !requiredKeys.some(k => k in parsed)){
+        state.investments = parsed.investments;
+        queueSave();
+        renderAll();
+        statusEl.textContent = `Updated investments only (${parsed.investments.holdings.length} holdings) — everything else was left as it was.`;
+        statusEl.style.color = 'var(--pine)';
+        return;
+      }
       const missing = requiredKeys.filter(k => !(k in parsed));
       if (missing.length){
         statusEl.textContent = `That file doesn't look like a Red Menace Money export (missing: ${missing.join(', ')}).`;

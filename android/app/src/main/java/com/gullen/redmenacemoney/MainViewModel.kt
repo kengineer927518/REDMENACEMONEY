@@ -35,13 +35,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun exportBackup(): String = store.exportBackupJson(state)
 
-    /** Returns true if the import succeeded. */
-    fun importBackup(raw: String): Boolean {
-        val parsed = store.parseBackupJson(raw) ?: return false
+    /**
+     * Returns a success message, or null if the file couldn't be read. A file containing only an
+     * "investments" section updates just the holdings and leaves everything else as it was.
+     */
+    fun importBackup(raw: String): String? {
+        if (!store.isFullBackup(raw)) {
+            val inv = store.parseInvestmentsOnly(raw) ?: return null
+            state = state.copy(investments = inv)
+            store.save(state)
+            store.maybeSnapshotHistory(state)
+            return "Imported investments only (${inv.holdings.size} holdings) — everything else was left as it was."
+        }
+        val parsed = store.parseBackupJson(raw) ?: return null
         state = parsed
         store.save(state)
         store.maybeSnapshotHistory(state)
-        return true
+        return "Imported successfully."
     }
 
     fun history(): List<HistoryEntry> = store.loadHistory()

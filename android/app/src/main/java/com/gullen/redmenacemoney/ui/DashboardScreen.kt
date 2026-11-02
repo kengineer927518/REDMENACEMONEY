@@ -58,11 +58,8 @@ fun DashboardScreen(vm: MainViewModel) {
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
-            if (text != null && vm.importBackup(text)) {
-                importStatus = "Imported successfully."
-            } else {
-                importStatus = "Couldn't read that file — make sure it's the Red Menace Money JSON export/starter file."
-            }
+            importStatus = (if (text != null) vm.importBackup(text) else null)
+                ?: "Couldn't read that file — make sure it's the Red Menace Money JSON export/starter file."
         }
     }
 

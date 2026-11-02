@@ -1,4 +1,5 @@
-const CACHE_NAME = 'redmenacemoney-v1';
+// Bump CACHE_NAME whenever the app shell changes so old copies are cleared out.
+const CACHE_NAME = 'redmenacemoney-v2';
 const APP_SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -17,16 +18,27 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Cache-first for the app shell, network-first fallback for everything else (e.g. Google Fonts)
+// The page itself (index.html) is network-first, so a new version shows up as soon as it's
+// pushed; the saved copy is only used when offline. Icons and other files stay cache-first.
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((response) => {
-        // don't try to cache opaque/cross-origin responses aggressively; just pass through
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  const isPage = req.mode === 'navigate' ||
+    (url.origin === self.location.origin && url.pathname.endsWith('/index.html'));
+  if (isPage) {
+    event.respondWith(
+      fetch(req).then((response) => {
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+        }
         return response;
-      }).catch(() => cached);
-    })
+      }).catch(() => caches.match(req).then((c) => c || caches.match('./index.html')))
+    );
+    return;
+  }
+  event.respondWith(
+    caches.match(req).then((cached) => cached || fetch(req))
   );
 });

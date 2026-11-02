@@ -5,9 +5,16 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 
 @Serializable
 data class HistoryEntry(val timestamp: Long, val data: String)
+
+/** Shape of a holdings-only update file: just an "investments" section, nothing else. */
+@Serializable
+data class InvestmentsOnlyImport(val investments: Investments)
+
+private val FULL_BACKUP_KEYS = listOf("assumptions", "paycheque", "budgetIncome", "budgetExpense", "debts", "netWorthEntries", "goals")
 
 /**
  * Same shape as ON TRACK's Store.kt: SharedPreferences + JSON strings, no database.
@@ -40,6 +47,21 @@ class FinanceStore(context: Context) {
     /** Returns null if the file doesn't parse as a valid AppState, so the UI can show an error. */
     fun parseBackupJson(raw: String): AppState? = try {
         json.decodeFromString<AppState>(raw)
+    } catch (e: Exception) {
+        null
+    }
+
+    /** True if the file has any of the core sections (a normal full backup); false for a partial file. */
+    fun isFullBackup(raw: String): Boolean = try {
+        val keys = json.parseToJsonElement(raw).jsonObject.keys
+        FULL_BACKUP_KEYS.any { it in keys }
+    } catch (e: Exception) {
+        true // not valid JSON — let the normal parser report the failure
+    }
+
+    /** Parses a holdings-only update file; null if it doesn't contain a readable investments section. */
+    fun parseInvestmentsOnly(raw: String): Investments? = try {
+        json.decodeFromString<InvestmentsOnlyImport>(raw).investments
     } catch (e: Exception) {
         null
     }
